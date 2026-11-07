@@ -1,0 +1,38 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Sentence sketch</title>
+<style>
+:root{--lime:#CDEB5B;--ink:#191C15;--muted:#5A6352;--line:#E7EAE2;--green:#4C6A0C}
+*{box-sizing:border-box}html,body{margin:0;width:1440px;height:900px;overflow:hidden;background:#fff;color:var(--ink);font:15px/1.5 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,system-ui,sans-serif}
+.top{display:flex;justify-content:space-between;align-items:center;padding:32px 72px}
+.brand{display:flex;align-items:center;gap:10px;font:700 26px/1 inherit;letter-spacing:-.05em}
+.mk{width:36px;height:36px;border-radius:11px;background:var(--lime)}
+.sm{display:inline-flex;align-items:center;height:42px;padding:0 18px;border-radius:12px;box-shadow:inset 0 0 0 1px var(--line);font-weight:600}
+main{padding:64px 72px 0}
+.who{font-size:16px;color:var(--muted);margin:0 0 18px}
+.who b{color:var(--ink)}
+h1{margin:0;font:700 112px/.98 -apple-system,BlinkMacSystemFont,system-ui,sans-serif;letter-spacing:-.045em;max-width:13ch}
+mark{background:linear-gradient(transparent 58%,var(--lime) 58%);color:inherit;font-variant-numeric:tabular-nums}
+.below{display:grid;grid-template-columns:1fr auto;gap:48px;align-items:end;margin-top:48px}
+.below p{margin:0;font-size:19px;max-width:46ch;color:var(--muted)}
+.below p b{color:var(--ink)}
+.btn{display:inline-flex;align-items:center;height:58px;padding:0 30px;border-radius:16px;background:var(--ink);color:#F7FAEE;font-weight:600;font-size:17px}
+.cs{position:absolute;left:72px;right:72px;bottom:0;display:grid;grid-template-columns:repeat(5,1fr);border-top:2px solid var(--ink)}
+.cs div{padding:18px 20px 30px 0}
+.cs b{display:block;font-size:15px}.cs span{font-size:13.5px;color:var(--muted)}
+.cs .x b:before{content:"✕ ";color:#C4363B}.cs .y b:before{content:"✓ ";color:var(--green)}
+.tag{position:absolute;right:72px;top:118px;font-size:12px;color:var(--muted)}
+</style></head><body>
+<header class="top"><div class="brand"><span class="mk"></span>fundo</div><span class="sm">Sign in</span></header>
+<main>
+<p class="who"><b>Paolo Mendoza</b> · Salary Loan · ₱150,000 over 24 months</p>
+<h1>Over the <mark>₱80,400</mark> limit by <mark>₱69,600</mark>.</h1>
+<div class="below"><p>Fundo Admin checks every application against <b>Bayanihan MPC's own loan rules</b> and tells you why, in plain sentences with real figures, before you decide.</p><span class="btn">Sign in to Fundo Admin →</span></div>
+</main>
+<section class="cs">
+ <div class="y"><b>Character</b><span>Member since 2019, no missed payments</span></div>
+ <div class="x"><b>Capacity</b><span>Pay ratio 46%, above the 40% limit</span></div>
+ <div class="x"><b>Capital</b><span>₱150,000 asked, ₱80,400 allowed</span></div>
+ <div class="y"><b>Collateral</b><span>Co-maker confirmed by text</span></div>
+ <div class="y"><b>Conditions</b><span>Salary Loan rules apply</span></div>
+</section>
+<span class="tag">Sample data</span>
+</body></html>

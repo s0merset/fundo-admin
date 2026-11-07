@@ -1,0 +1,26 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "tight-leading",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/sentence.html"
+        ],
+        "createdAt": "2026-11-07T14:36:35.569Z",
+        "reason": "Claude: 112px display headline at .98 leading is intentional display setting in a throwaway decision sketch, not body text"
+      },
+      {
+        "rule": "cramped-padding",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/ledger.html"
+        ],
+        "createdAt": "2026-11-07T14:36:35.618Z",
+        "reason": "Claude: status pills (3px/10px) and ledger rules in a throwaway decision sketch; not shipped code"
+      }
+    ]
+  }
+}

@@ -1,0 +1,46 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Ledger sketch</title>
+<style>
+:root{--lime:#CDEB5B;--ink:#191C15;--line:#E7EAE2;--muted:#5A6352;--surface:#F4F5F1;--green:#4C6A0C}
+*{box-sizing:border-box}html,body{margin:0;width:1440px;height:900px;overflow:hidden;background:var(--surface);color:var(--ink);font:15px/1.5 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,system-ui,sans-serif}
+.wrap{display:grid;grid-template-columns:440px 1fr;height:900px}
+.l{padding:56px 48px 48px 64px;display:flex;flex-direction:column}
+.brand{display:flex;align-items:center;gap:10px;font:700 26px/1 inherit;letter-spacing:-.05em}
+.mk{width:36px;height:36px;border-radius:11px;background:var(--lime)}
+h1{margin:auto 0 0;font:700 52px/1.02 -apple-system,BlinkMacSystemFont,system-ui,sans-serif;letter-spacing:-.04em}
+.l p{margin:18px 0 28px;font-size:17px;color:var(--muted);max-width:32ch}
+.btn{display:inline-flex;align-items:center;gap:8px;height:52px;padding:0 26px;border-radius:14px;background:var(--ink);color:#F7FAEE;font-weight:600;font-size:16px;width:max-content}
+.note{margin-top:auto;font-size:13px;color:var(--muted)}
+.page{margin:40px 40px 40px 0;background:#fff;border-radius:6px 22px 22px 6px;box-shadow:0 1px 0 var(--line),0 24px 60px -30px rgba(25,28,21,.25);position:relative;padding:44px 48px 0 96px;overflow:hidden}
+.page:before{content:"";position:absolute;left:64px;top:0;bottom:0;width:3px;background:var(--lime)}
+.ph{display:flex;justify-content:space-between;align-items:baseline;border-bottom:2px solid var(--ink);padding-bottom:12px}
+.ph b{font-size:22px;letter-spacing:-.02em}.ph span{color:var(--muted);font-size:14px}
+.cols,.row{display:grid;grid-template-columns:110px 1fr 170px 130px 130px;gap:16px;align-items:center}
+.cols{height:40px;font-size:12px;font-weight:600;color:var(--muted);border-bottom:1px solid var(--line)}
+.row{height:76px;border-bottom:1px solid var(--line)}
+.row .no{font:500 13px ui-monospace,Menlo,monospace;color:var(--muted)}
+.row b{display:block;font-size:16px}.row small{color:var(--muted);font-size:13px}
+.amt{font-variant-numeric:tabular-nums;font-weight:600;text-align:right}
+.st{justify-self:start;padding:3px 10px;border-radius:99px;font-size:12.5px;font-weight:600}
+.new{background:#E3EDFA;color:#22508F}.rev{background:#FBECE0;color:#8A4510}.ok{background:#E0F1EE;color:#0F5E4E}
+.sum{display:flex;justify-content:space-between;padding:18px 0;font-weight:600;border-top:2px solid var(--ink);margin-top:-1px}
+.tag{position:absolute;right:48px;bottom:16px;font-size:12px;color:var(--muted)}
+</style></head><body><div class="wrap">
+<section class="l">
+ <div class="brand"><span class="mk"></span>fundo</div>
+ <h1>Today's loan ledger at Bayanihan MPC.</h1>
+ <p>Applications members send from the Fundo app land here, documents attached. Sign in to check, decide and release.</p>
+ <span class="btn">Sign in to Fundo Admin →</span>
+ <span class="note">Staff only · prototype accounts</span>
+</section>
+<section class="page">
+ <div class="ph"><b>Saturday, November 7</b><span>6 waiting · ₱344,000 requested</span></div>
+ <div class="cols"><span>Entry</span><span>Member</span><span>Loan</span><span style="text-align:right">Amount</span><span>Status</span></div>
+ <div class="row"><span class="no">LN-0144</span><span><b>Jocelyn Navarro</b><small>sent 24 min ago</small></span><span>Salary Loan</span><span class="amt">₱40,000</span><span class="st new">New</span></div>
+ <div class="row"><span class="no">LN-0141</span><span><b>Carmela Reyes</b><small>sent 2 hr ago</small></span><span>Salary Loan</span><span class="amt">₱60,000</span><span class="st new">New</span></div>
+ <div class="row"><span class="no">LN-0139</span><span><b>Teresita Villanueva</b><small>sent 5 hr ago</small></span><span>Emergency Loan</span><span class="amt">₱8,000</span><span class="st new">New</span></div>
+ <div class="row"><span class="no">LN-0133</span><span><b>Paolo Mendoza</b><small>sent 3 days ago</small></span><span>Salary Loan</span><span class="amt">₱150,000</span><span class="st rev">In review</span></div>
+ <div class="row"><span class="no">LN-0131</span><span><b>Ernesto Pascual</b><small>sent yesterday</small></span><span>Emergency Loan</span><span class="amt">₱6,000</span><span class="st rev">In review</span></div>
+ <div class="row"><span class="no">LN-0128</span><span><b>Ramon Bautista</b><small>sent yesterday</small></span><span>Livelihood Loan</span><span class="amt">₱80,000</span><span class="st rev">In review</span></div>
+ <div class="sum"><span>Carried to the queue</span><span class="amt">₱344,000</span></div>
+ <span class="tag">Sample data</span>
+</section></div></body></html>

@@ -34,7 +34,8 @@ const ICON = {
   chev: '<path d="M9 6l6 6-6 6"/>', wallet: '<path d="M4 7a2 2 0 0 1 2-2h12v4"/><path d="M4 7v10a2 2 0 0 0 2 2h14V9H6a2 2 0 0 1-2-2z"/><circle cx="16" cy="14" r="1"/>',
   card: '<rect x="3" y="6" width="18" height="13" rx="3"/><path d="M3 11h18"/>', msg: '<path d="M4 5h16v11H9l-5 4z"/>',
   lock: '<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>', refresh: '<path d="M20 12a8 8 0 1 1-2.3-5.6M20 4v5h-5"/>',
-  send: '<path d="M4 12l16-8-6 16-3-7z"/>', user: '<circle cx="12" cy="8" r="4"/><path d="M4 20c1-4 4-6 8-6s7 2 8 6"/>', pause: '<path d="M9 6v12M15 6v12"/>'
+  send: '<path d="M4 12l16-8-6 16-3-7z"/>', user: '<circle cx="12" cy="8" r="4"/><path d="M4 20c1-4 4-6 8-6s7 2 8 6"/>', pause: '<path d="M9 6v12M15 6v12"/>',
+  side: '<rect x="3" y="4" width="18" height="16" rx="3"/><path d="M9 4v16"/>'
 };
 const ic = (n, s = 18, w = 1.8) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[n]}</svg>`;
 const logo = (s, fg = '#191C15', dot = '#fff') => `<svg width="${s}" height="${s}" viewBox="0 0 64 64" aria-hidden="true"><g fill="none" stroke="${fg}" stroke-width="15" stroke-linecap="round" stroke-linejoin="round"><path d="M23 53V23a13 13 0 0 1 13-13h8"/><path d="M11 31h24"/></g><circle cx="47" cy="51" r="9" fill="${dot}"/></svg>`;
@@ -298,6 +299,62 @@ function dMember(m) {
   <span class="spacer"></span>${can('members.delete') ? `<button class="btn ghost red" data-act="memberDelete" data-id="${m.id}">${ic('trash', 16)} Delete</button>` : ''}</div>`;
 }
 
+/* ---------- landing (front door, before sign-in) ---------- */
+// Runs the real checks on freshly seeded sample data, never on D: this page is public, so it must not show live member records.
+let LAND = null, landI = 0;
+function landCases() {
+  if (LAND) return LAND;
+  const live = D; D = seed();
+  try {
+    LAND = D.apps.filter(a => a.status === 'new' || a.status === 'review').map(a => {
+      const m = member(a.memberId), cks = checks(a);
+      return { who: full(m), what: `${PRODUCTS[a.product].n} · ${peso0(a.amount)} over ${a.term} months`, cks, head: ([cks[2], cks[1]].find(c => c[2] !== 'ok') || cks[2])[1] };
+    }).sort((x, y) => (y.cks.some(c => c[2] === 'bad') ? 1 : 0) - (x.cks.some(c => c[2] === 'bad') ? 1 : 0));
+  } finally { D = live; }
+  return LAND;
+}
+const markFigures = t => esc(t).replace(/₱[\d,]+(?:\.\d\d)?|\d+%/g, f => `<mark>${f}</mark>`);
+function landCase() {
+  const c = landCases()[landI], lv = { ok: 'check', warn: 'clock', bad: 'x' }, wd = { ok: 'Passes', warn: 'Needs a look', bad: 'Fails' };
+  return `<p class="ld-who"><b>${esc(c.who)}</b> · ${esc(c.what)}</p>
+    <h1 class="ld-h" id="ldTitle">${markFigures(c.head.replace(/\.?$/, '.'))}</h1>
+    <ol class="ld-cks">${c.cks.map(k => `<li class="ld-${k[2]}"><b><span class="ld-st">${ic(lv[k[2]], 13, 3)}<span class="sr">${wd[k[2]]}:</span></span>${k[0]}</b><span>${esc(k[1])}</span></li>`).join('')}</ol>`;
+}
+function landingView() {
+  drawerKey = ''; lastView = ''; landI = 0;
+  const n = landCases().length;
+  root.innerHTML = `<div class="ld">
+  <header class="ld-top">${brand()}<a class="btn ghost" href="#/signin">Sign in</a></header>
+  <main>
+  <section class="ld-hero" aria-labelledby="ldTitle">
+    <div id="ldCase" aria-live="polite">${landCase()}</div>
+    <div class="ld-act">
+      <p>Fundo Admin checks every loan application against <b>${esc(D.coop.sh)}'s own loan rules</b> and tells you why, in plain sentences with real figures, before you decide.</p>
+      <div class="ld-btns"><a class="btn dark lg" href="#/signin">Sign in to Fundo Admin ${ic('chev', 18, 2.2)}</a>${n > 1 ? `<button class="btn ghost lg" data-act="landNext">Next application <span class="ld-n" id="ldN">1 of ${n}</span></button>` : ''}</div>
+      <p class="ld-tag">Sample application, not a real member.</p>
+    </div>
+  </section>
+  <section class="ld-sec" aria-labelledby="ldRules">
+    <h2 id="ldRules">The rules every application is checked against</h2>
+    <p class="ld-lede">Members apply from the Fundo app with their documents attached. Fundo Admin holds each request to the loan product's own terms. These are the prototype's sample terms.</p>
+    <div class="ld-tbl" role="table" aria-label="Loan products">
+      <div class="ld-tr ld-th" role="row"><span role="columnheader">Loan</span><span role="columnheader">Monthly rate</span><span role="columnheader">Limit</span><span role="columnheader">Co-maker</span><span role="columnheader">Documents</span></div>
+      ${Object.values(PRODUCTS).map(p => `<div class="ld-tr" role="row"><b role="cell">${p.n}</b><span role="cell"><span class="tab">${p.rate}%</span> a month</span><span role="cell"><span class="tab">${p.mult}×</span> savings and shares, up to <span class="tab">${peso0(p.cap)}</span></span><span role="cell">${p.co ? 'Co-maker required' : 'No co-maker needed'}</span><span role="cell">Needs ${p.docs.map(d => DOCS[d]).join(', ')}</span></div>`).join('')}
+    </div>
+  </section>
+  <section class="ld-sec" aria-labelledby="ldRoles">
+    <h2 id="ldRoles">What you can do depends on your role</h2>
+    <div class="ld-roles">${Object.values(ROLES).map(r => `<div><h3>${r.n}</h3><ul>${PERMS.filter(x => x[0] === 'view' || r.can.includes(x[0])).map(x => `<li>${x[1]}</li>`).join('')}</ul></div>`).join('')}</div>
+  </section>
+  <section class="ld-end">
+    <h2>Your queue is one sign-in away.</h2>
+    <a class="btn dark lg" href="#/signin">Sign in to Fundo Admin ${ic('chev', 18, 2.2)}</a>
+    <p>${ic('lock', 14)} Prototype: sign-in picks a sample staff account. Connect your co-op's staff accounts before going live.</p>
+  </section>
+  </main></div>`;
+  document.title = 'Fundo Admin · ' + D.coop.sh;
+}
+
 /* ---------- shell + render ---------- */
 const root = $('#root');
 let lastView = '', drawerKey = '', drawerFocus = null, modalFocus = null, modalSubmit = null;
@@ -309,10 +366,11 @@ function signinView() {
   document.title = 'Sign in · Fundo Admin';
 }
 function shell() {
-  root.innerHTML = `<div class="app"><aside class="side">${brand()}
+  let mini = false; try { mini = localStorage.getItem('fundo-admin-side') === 'mini'; } catch (e) { }
+  root.innerHTML = `<div class="app${mini ? ' mini' : ''}"><aside class="side" id="side">${brand()}
     <div class="side-coop"><span class="cb" aria-hidden="true">BM</span><span><b>${esc(D.coop.sh)}</b><small>${esc(D.coop.city)} · Admin</small></span></div>
     <nav class="nav" id="nav" aria-label="Main"></nav><div class="side-me" id="sideMe"></div></aside>
-    <div class="main-wrap"><header class="top"><span class="crumb" id="crumb"></span><span class="sync"><i aria-hidden="true"></i>Synced with the Fundo app</span></header><main class="main" id="main"></main></div></div>
+    <div class="main-wrap"><header class="top"><button class="ib side-t" data-act="toggleSide" aria-controls="side" aria-expanded="${!mini}" aria-label="${mini ? 'Expand' : 'Collapse'} sidebar" title="${mini ? 'Expand' : 'Collapse'} sidebar">${ic('side', 19)}</button><span class="crumb" id="crumb"></span><span class="sync"><i aria-hidden="true"></i>Synced with the Fundo app</span></header><main class="main" id="main"></main></div></div>
   <div class="scrim" id="scrim" data-act="closeLayer"></div>
   <aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="drTitle" hidden></aside>
   <div class="modal-wrap" id="modalWrap" hidden><div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="mdTitle"></div></div>
@@ -320,15 +378,15 @@ function shell() {
 }
 const VIEWS = { overview: ['Overview', vOverview], loans: ['Loan applications', vLoans], members: ['Members', vMembers], staff: ['Staff and roles', vStaff] };
 function render() {
-  if (!me()) { signinView(); return; }
+  if (!me()) { location.hash === '#/signin' ? signinView() : landingView(); return; }
   if (!$('#nav')) shell();
   let [, view, id] = location.hash.split('/');
   if (!VIEWS[view] || (view === 'staff' && !can('staff.manage'))) view = 'overview';
   const w = waiting().length, u = me();
   $('#nav').innerHTML = [['overview', 'grid', 'Overview'], ['loans', 'inbox', 'Loan applications', w], ['members', 'users', 'Members'], ...(can('staff.manage') ? [['staff', 'shield', 'Staff and roles']] : [])]
-    .map(n => `<a href="#/${n[0]}" ${n[0] === view ? 'aria-current="page"' : ''}>${ic(n[1], 19)}${n[2]}${n[3] ? `<span class="cnt" aria-label="${n[3]} waiting">${n[3]}</span>` : ''}</a>`).join('');
+    .map(n => `<a href="#/${n[0]}" title="${n[2]}" ${n[0] === view ? 'aria-current="page"' : ''}>${ic(n[1], 19)}<span class="nl">${n[2]}</span>${n[3] ? `<span class="cnt" aria-label="${n[3]} waiting">${n[3]}</span>` : ''}</a>`).join('');
   $('#sideMe').innerHTML = `<div class="row"><span class="av ink">${initials(u.name)}</span><span class="grow who"><b>${esc(u.name)}</b><span class="pill ${u.role === 'admin' ? 'purple' : u.role === 'credit' ? 'orange' : 'blue'}">${ROLES[u.role].n}</span></span></div>
-    <div class="acts"><button class="btn sm ghost" data-act="signout">${ic('logout', 15)}<span>Switch account</span></button><button class="btn sm ghost" data-act="resetDemo" title="Reset sample data" aria-label="Reset sample data">${ic('refresh', 15)}</button></div>`;
+    <div class="acts"><button class="btn sm ghost" data-act="signout" title="Switch account" aria-label="Switch account">${ic('logout', 15)}<span>Switch account</span></button><button class="btn sm ghost" data-act="resetDemo" title="Reset sample data" aria-label="Reset sample data">${ic('refresh', 15)}</button></div>`;
   $('#crumb').textContent = VIEWS[view][0];
   $('#main').innerHTML = VIEWS[view][1]();
   if (view !== lastView) { window.scrollTo(0, 0); lastView = view; }
@@ -381,6 +439,12 @@ const fld = (name, label, value = '', type = 'text', extra = '', hint = '') => `
 /* ---------- actions ---------- */
 const A = {
   signin: el => { D.me = el.dataset.id; save(); location.hash = '#/overview'; render(); },
+  toggleSide: () => {
+    const mini = $('.app').classList.toggle('mini'), b = $('.side-t'), l = (mini ? 'Expand' : 'Collapse') + ' sidebar';
+    b.setAttribute('aria-expanded', !mini); b.setAttribute('aria-label', l); b.title = l;
+    try { localStorage.setItem('fundo-admin-side', mini ? 'mini' : ''); } catch (e) { }
+  },
+  landNext: () => { const n = landCases().length; landI = (landI + 1) % n; $('#ldCase').innerHTML = landCase(); $('#ldN').textContent = `${landI + 1} of ${n}`; },
   signout: () => { D.me = null; save(); history.replaceState(null, '', location.pathname); render(); },
   resetDemo: () => openModal('Reset sample data?', '<p>This puts back the sample members and applications and clears changes made in this browser.</p>', { submit: 'Reset', danger: true, onSubmit: () => { const keep = D.me; D = seed(); D.me = keep; commit('Sample data reset'); } }),
   closeLayer: () => { if (!$('#modalWrap').hidden) { closeModal(); return; } const [, v] = location.hash.split('/'); location.hash = '#/' + (v || 'overview'); },

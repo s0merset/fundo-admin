@@ -1,0 +1,35 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Queue sketch</title>
+<style>
+:root{--lime:#CDEB5B;--ink:#191C15;--muted:#3E4A1C}
+*{box-sizing:border-box}html,body{margin:0;width:1440px;height:900px;overflow:hidden;background:var(--lime);color:var(--ink);font:15px/1.5 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,system-ui,sans-serif}
+.top{display:flex;justify-content:space-between;align-items:center;padding:32px 64px}
+.brand{display:flex;align-items:center;gap:10px;font:700 26px/1 inherit;letter-spacing:-.05em}
+.mk{width:36px;height:36px;border-radius:11px;background:var(--ink)}
+.top small{font-size:14px;font-weight:600;color:var(--muted)}
+.hero{display:grid;grid-template-columns:auto 1fr;gap:48px;align-items:end;padding:8px 64px 0}
+.n{font:800 340px/.78 -apple-system,BlinkMacSystemFont,system-ui,sans-serif;letter-spacing:-.07em;font-variant-numeric:tabular-nums}
+.h h1{margin:0;font:700 46px/1.05 -apple-system,BlinkMacSystemFont,system-ui,sans-serif;letter-spacing:-.035em;max-width:14ch}
+.h p{margin:14px 0 26px;font-size:17px;color:var(--muted);max-width:40ch}
+.btn{display:inline-flex;align-items:center;height:56px;padding:0 28px;border-radius:16px;background:var(--ink);color:var(--lime);font-weight:700;font-size:17px}
+.stack{position:absolute;left:64px;right:64px;bottom:-30px;height:290px}
+.t{position:absolute;width:300px;height:172px;background:#fff;border-radius:20px;padding:20px 22px;box-shadow:0 18px 40px -20px rgba(25,28,21,.45)}
+.t span{font:500 12.5px ui-monospace,Menlo,monospace;color:#5A6352}
+.t b{display:block;margin-top:10px;font-size:19px;letter-spacing:-.01em}
+.t em{display:block;font-style:normal;color:#5A6352;font-size:14px}
+.t i{position:absolute;left:22px;bottom:20px;font:700 26px/1 inherit;font-style:normal;font-variant-numeric:tabular-nums;letter-spacing:-.03em}
+.t:nth-child(1){left:0;top:40px;transform:rotate(-3deg)}.t:nth-child(2){left:250px;top:10px;transform:rotate(2deg)}
+.t:nth-child(3){left:520px;top:50px;transform:rotate(-1deg)}.t:nth-child(4){left:790px;top:20px;transform:rotate(3deg)}
+.t:nth-child(5){left:1012px;top:56px;transform:rotate(-2deg)}
+.tag{position:absolute;right:64px;bottom:250px;font-size:12px;font-weight:600;color:var(--muted)}
+</style></head><body>
+<header class="top"><div class="brand"><span class="mk"></span>fundo</div><small>Bayanihan MPC · staff only</small></header>
+<section class="hero"><div class="n">6</div><div class="h"><h1>applications waiting for a decision.</h1><p>Members apply in the Fundo app; their papers arrive with them. Sign in to work the queue.</p><span class="btn">Sign in →</span></div></section>
+<div class="stack">
+ <div class="t"><span>LN-2611-0144</span><b>Jocelyn Navarro</b><em>Salary Loan · 24 min ago</em><i>₱40,000</i></div>
+ <div class="t"><span>LN-2611-0141</span><b>Carmela Reyes</b><em>Salary Loan · 2 hr ago</em><i>₱60,000</i></div>
+ <div class="t"><span>LN-2611-0139</span><b>Teresita Villanueva</b><em>Emergency Loan · 5 hr ago</em><i>₱8,000</i></div>
+ <div class="t"><span>LN-2611-0133</span><b>Paolo Mendoza</b><em>Salary Loan · 3 days ago</em><i>₱150,000</i></div>
+ <div class="t"><span>LN-2611-0128</span><b>Ramon Bautista</b><em>Livelihood Loan · yesterday</em><i>₱80,000</i></div>
+</div>
+<span class="tag">Sample data</span>
+</body></html>
