@@ -300,59 +300,38 @@ function dMember(m) {
 }
 
 /* ---------- landing (front door, before sign-in) ---------- */
-// Runs the real checks on freshly seeded sample data, never on D: this page is public, so it must not show live member records.
-let LAND = null, landI = 0;
-function landCases() {
-  if (LAND) return LAND;
-  const live = D; D = seed();
-  try {
-    LAND = D.apps.filter(a => a.status === 'new' || a.status === 'review').map(a => {
-      const m = member(a.memberId), cks = checks(a);
-      return { who: full(m), what: `${PRODUCTS[a.product].n} · ${peso0(a.amount)} over ${a.term} months`, cks, head: ([cks[2], cks[1]].find(c => c[2] !== 'ok') || cks[2])[1] };
-    }).sort((x, y) => (y.cks.some(c => c[2] === 'bad') ? 1 : 0) - (x.cks.some(c => c[2] === 'bad') ? 1 : 0));
-  } finally { D = live; }
-  return LAND;
-}
-const markFigures = t => esc(t).replace(/₱[\d,]+(?:\.\d\d)?|\d+%/g, f => `<mark>${f}</mark>`);
-function landCase() {
-  const c = landCases()[landI], lv = { ok: 'check', warn: 'clock', bad: 'x' }, wd = { ok: 'Passes', warn: 'Needs a look', bad: 'Fails' };
-  return `<p class="ld-who"><b>${esc(c.who)}</b> · ${esc(c.what)}</p>
-    <h1 class="ld-h" id="ldTitle">${markFigures(c.head.replace(/\.?$/, '.'))}</h1>
-    <ol class="ld-cks">${c.cks.map(k => `<li class="ld-${k[2]}"><b><span class="ld-st">${ic(lv[k[2]], 13, 3)}<span class="sr">${wd[k[2]]}:</span></span>${k[0]}</b><span>${esc(k[1])}</span></li>`).join('')}</ol>`;
-}
 function landingView() {
-  drawerKey = ''; lastView = ''; landI = 0;
-  const n = landCases().length;
+  drawerKey = ''; lastView = '';
+  const areas = [['grid', 'Overview', 'What is waiting today'], ['inbox', 'Loan applications', 'Review documents, approve and release'], ['users', 'Members', 'Records, savings and share capital'], ['shield', 'Staff and roles', 'Co-op admins only']];
   root.innerHTML = `<div class="ld">
   <header class="ld-top">${brand()}<a class="btn ghost" href="#/signin">Sign in</a></header>
   <main>
   <section class="ld-hero" aria-labelledby="ldTitle">
-    <div id="ldCase" aria-live="polite">${landCase()}</div>
+    <h1 class="ld-h" id="ldTitle">${esc(D.coop.sh)} loan desk.</h1>
     <div class="ld-act">
-      <p>Fundo Admin checks every loan application against <b>${esc(D.coop.sh)}'s own loan rules</b> and tells you why, in plain sentences with real figures, before you decide.</p>
-      <div class="ld-btns"><a class="btn dark lg" href="#/signin">Sign in to Fundo Admin ${ic('chev', 18, 2.2)}</a>${n > 1 ? `<button class="btn ghost lg" data-act="landNext">Next application <span class="ld-n" id="ldN">1 of ${n}</span></button>` : ''}</div>
-      <p class="ld-tag">Sample application, not a real member.</p>
+      <p>Loan applications from the Fundo app, document checks, approvals, releases and member records. For ${esc(D.coop.sh)} staff.</p>
+      <div class="ld-btns"><a class="btn dark lg" href="#/signin">Sign in ${ic('chev', 18, 2.2)}</a></div>
     </div>
+    <ul class="ld-cks">${areas.map(x => `<li><b>${ic(x[0], 18)}${x[1]}</b><span>${x[2]}</span></li>`).join('')}</ul>
   </section>
   <section class="ld-sec" aria-labelledby="ldRules">
-    <h2 id="ldRules">The rules every application is checked against</h2>
-    <p class="ld-lede">Members apply from the Fundo app with their documents attached. Fundo Admin holds each request to the loan product's own terms. These are the prototype's sample terms.</p>
+    <h2 id="ldRules">Loan products</h2>
     <div class="ld-tbl" role="table" aria-label="Loan products">
       <div class="ld-tr ld-th" role="row"><span role="columnheader">Loan</span><span role="columnheader">Monthly rate</span><span role="columnheader">Limit</span><span role="columnheader">Co-maker</span><span role="columnheader">Documents</span></div>
       ${Object.values(PRODUCTS).map(p => `<div class="ld-tr" role="row"><b role="cell">${p.n}</b><span role="cell"><span class="tab">${p.rate}%</span> a month</span><span role="cell"><span class="tab">${p.mult}×</span> savings and shares, up to <span class="tab">${peso0(p.cap)}</span></span><span role="cell">${p.co ? 'Co-maker required' : 'No co-maker needed'}</span><span role="cell">Needs ${p.docs.map(d => DOCS[d]).join(', ')}</span></div>`).join('')}
     </div>
   </section>
   <section class="ld-sec" aria-labelledby="ldRoles">
-    <h2 id="ldRoles">What you can do depends on your role</h2>
+    <h2 id="ldRoles">Access by role</h2>
     <div class="ld-roles">${Object.values(ROLES).map(r => `<div><h3>${r.n}</h3><ul>${PERMS.filter(x => x[0] === 'view' || r.can.includes(x[0])).map(x => `<li>${x[1]}</li>`).join('')}</ul></div>`).join('')}</div>
   </section>
   <section class="ld-end">
-    <h2>Your queue is one sign-in away.</h2>
-    <a class="btn dark lg" href="#/signin">Sign in to Fundo Admin ${ic('chev', 18, 2.2)}</a>
-    <p>${ic('lock', 14)} Prototype: sign-in picks a sample staff account. Connect your co-op's staff accounts before going live.</p>
+    <h2>Staff only.</h2>
+    <a class="btn dark lg" href="#/signin">Sign in ${ic('chev', 18, 2.2)}</a>
+    <p>${ic('lock', 14)} Need access or a role change? Ask your co-op admin. Prototype: sign-in picks a sample staff account.</p>
   </section>
   </main></div>`;
-  document.title = 'Fundo Admin · ' + D.coop.sh;
+  document.title = 'Sign in · Fundo Admin';
 }
 
 /* ---------- shell + render ---------- */
@@ -444,7 +423,6 @@ const A = {
     b.setAttribute('aria-expanded', !mini); b.setAttribute('aria-label', l); b.title = l;
     try { localStorage.setItem('fundo-admin-side', mini ? 'mini' : ''); } catch (e) { }
   },
-  landNext: () => { const n = landCases().length; landI = (landI + 1) % n; $('#ldCase').innerHTML = landCase(); $('#ldN').textContent = `${landI + 1} of ${n}`; },
   signout: () => { D.me = null; save(); history.replaceState(null, '', location.pathname); render(); },
   resetDemo: () => openModal('Reset sample data?', '<p>This puts back the sample members and applications and clears changes made in this browser.</p>', { submit: 'Reset', danger: true, onSubmit: () => { const keep = D.me; D = seed(); D.me = keep; commit('Sample data reset'); } }),
   closeLayer: () => { if (!$('#modalWrap').hidden) { closeModal(); return; } const [, v] = location.hash.split('/'); location.hash = '#/' + (v || 'overview'); },
