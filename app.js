@@ -348,23 +348,58 @@ function dMember(m) {
 const root = $('#root');
 let lastView = '', drawerKey = '', drawerFocus = null, modalFocus = null, modalSubmit = null;
 /* Front door: a staff sign-in, same pattern as the member app's lime welcome + plain sign-in screen. */
+/* What an account can do and what is waiting on it, shown beside the account list. */
+function rolePreview(s) {
+  const can = ROLES[s.role].can, todo = [];
+  const n = (c, one, many) => c && todo.push(`<li><b class="tab">${c}</b>${c === 1 ? one : many}</li>`);
+  if (can.includes('loans.decide')) { n(waiting().length, 'application waiting for a decision', 'applications waiting for a decision'); n(D.apps.filter(a => a.status === 'approved').length, 'approved loan to release', 'approved loans to release'); }
+  if (can.includes('docs.verify')) n(allDocs().filter(DOCF.todo).length, 'document to check', 'documents to check');
+  if (can.includes('members.edit')) n(D.members.filter(m => m.status === 'Active').length, 'active member record to keep', 'active member records to keep');
+  return `<div class="si-rh"><span class="pill lime">${ROLES[s.role].n}</span><small>${esc(s.name.split(' ')[0])}'s desk</small></div>
+    <ul class="si-todo">${todo.join('') || '<li>Nothing waiting on this role right now.</li>'}</ul>
+    <ul class="si-perms">${PERMS.map(p => { const y = p[0] === 'view' || can.includes(p[0]); return `<li class="${y ? 'y' : 'n'}">${ic(y ? 'check' : 'lock', 14, y ? 2.6 : 1.8)}<span>${p[1]}${y ? '' : '<span class="sr"> (locked)</span>'}</span></li>`; }).join('')}</ul>`;
+}
 function signinView() {
   drawerKey = ''; lastView = '';
+  const w = waiting(), old = w.slice().sort((a, b) => a.submitted - b.submitted)[0], docs = allDocs(), flagged = docs.filter(DOCF.flagged).length, ready = D.apps.filter(a => a.status === 'approved');
+  const first = staff(D.last) || D.staff[0];
+  const stat = (n, l, e) => `<div class="si-stat"><b class="tab" data-n="${n}">${n}</b><span>${l}<small>${e}</small></span></div>`;
   root.innerHTML = `<div class="signin">
-  <aside class="si-brand" aria-hidden="true"><video class="si-vid" muted loop playsinline></video><div class="si-mark">${logo(64)}</div><span class="wm">${logo(420, '#191C15', '#191C15')}</span><div><div class="si-wm">fundo <span>admin</span></div><p>Loan desk for co-op staff.</p></div></aside>
+  <aside class="si-brand"><video class="si-vid" muted loop playsinline aria-hidden="true"></video><i class="si-glow" aria-hidden="true"></i>
+    <div class="si-top"><div class="si-mark">${logo(64)}</div><span class="si-clock tab" id="siClock"></span></div><span class="wm" aria-hidden="true">${logo(420, '#191C15', '#191C15')}</span>
+    <div><div class="si-wm">fundo <span>admin</span></div><p>Loan desk for co-op staff.</p>
+      <div class="si-desk"><div class="si-dh"><i></i>On the desk now</div>
+        ${stat(w.length, 'waiting for a decision', w.length ? `${peso0(sum(w, a => a.amount))} asked · oldest sent ${ago(old.submitted)}` : 'Every application has a decision')}
+        ${stat(docs.filter(DOCF.todo).length, 'documents to check', flagged ? flagged + ' flagged' : 'None flagged')}
+        ${stat(ready.length, 'approved, ready to release', ready.length ? peso0(sum(ready, a => a.amount)) + ' to pay out by GCash or Maya' : 'Nothing to pay out')}
+      </div></div></aside>
   <main class="si-main"><div class="si-card">
     <div class="si-coop"><span class="cb">${esc(D.coop.sh.split(' ').map(w => w[0]).join('').slice(0, 2))}</span><span><b>${esc(D.coop.n)}</b><small>${esc(D.coop.city)} · Staff console</small></span></div>
     <h1>Sign in</h1><p class="mut">Choose your staff account. What you can do depends on your role.</p>
-    <div class="si-lh"><span>Staff accounts</span><span class="tab">${D.staff.length}</span></div>
-    <div class="si-list">${D.staff.map(s => `<button class="si-acct" data-act="signin" data-id="${s.id}"><span class="av ink">${initials(s.name)}</span><span class="grow"><b>${esc(s.name)}</b><small>${esc(s.title === ROLES[s.role].n ? s.title : s.title + ' · ' + ROLES[s.role].n)}</small></span>${ic('chev', 18)}</button>`).join('')}</div>
+    <div class="si-cols"><div>
+      <div class="si-lh"><span>Staff accounts</span><span class="tab">${D.staff.length}</span></div>
+      <div class="si-list">${D.staff.map((s, i) => `<button class="si-acct${s === first ? ' on' : ''}" data-act="signin" data-id="${s.id}"><span class="av ink">${initials(s.name)}</span><span class="grow"><b>${esc(s.name)}${s.id === D.last ? ' <span class="pill grey">Last used</span>' : ''}</b><small>${esc(s.title === ROLES[s.role].n ? s.title : s.title + ' · ' + ROLES[s.role].n)}</small></span>${i < 9 ? `<kbd aria-hidden="true">${i + 1}</kbd>` : ''}${ic('chev', 18)}</button>`).join('')}</div>
+      <p class="si-keys">Press a number key to sign in as that account.</p>
+    </div><section class="si-role" id="siRole" aria-label="What this account can do">${rolePreview(first)}</section></div>
     <p class="si-note">${ic('lock', 14)}<span>Prototype sign-in: pick a sample account. Need access or a role change? Ask your co-op admin.</span></p>
   </div></main></div>`;
   document.title = 'Sign in · Fundo Admin';
+  const still = matchMedia('(prefers-reduced-motion:reduce)').matches, brand = $('.si-brand');
+  // hovering or tabbing to an account previews its role
+  const show = e => { const b = e.target.closest('.si-acct'); if (!b || b.classList.contains('on')) return; $$('.si-acct').forEach(x => x.classList.toggle('on', x === b)); $('#siRole').innerHTML = rolePreview(staff(b.dataset.id)); };
+  $('.si-list').addEventListener('mouseover', show); $('.si-list').addEventListener('focusin', show);
+  // clock; the timer stops itself once the sign-in screen is gone
+  const clock = () => { const c = $('#siClock'); if (!c) return clearInterval(timer); c.textContent = new Date().toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }); };
+  const timer = setInterval(clock, 15000); clock();
+  if (!still) {
+    $$('.si-stat b').forEach(el => { const n = +el.dataset.n, t0 = performance.now(), f = t => { const p = Math.min(1, (t - t0) / 700); el.textContent = Math.round(n * (1 - Math.pow(1 - p, 3))); if (p < 1) requestAnimationFrame(f); }; requestAnimationFrame(f); });
+    brand.addEventListener('pointermove', e => { const r = brand.getBoundingClientRect(); brand.style.setProperty('--mx', e.clientX - r.left + 'px'); brand.style.setProperty('--my', e.clientY - r.top + 'px'); });
+  }
   // background video: desk widths only (phones get the short lime header); the lime panel stays if media/signin.mp4 is missing
   const v = $('.si-vid');
   if (matchMedia('(min-width:761px)').matches) {
-    v.addEventListener('loadeddata', () => v.parentNode.classList.add('has-vid'));
-    v.autoplay = !matchMedia('(prefers-reduced-motion:reduce)').matches; // reduced motion: still first frame
+    v.addEventListener('loadeddata', () => brand.classList.add('has-vid'));
+    v.autoplay = !still; // reduced motion: still first frame
     v.src = 'media/signin.mp4';
   }
 }
@@ -441,7 +476,7 @@ const fld = (name, label, value = '', type = 'text', extra = '', hint = '') => `
 
 /* ---------- actions ---------- */
 const A = {
-  signin: el => { D.me = el.dataset.id; save(); location.hash = '#/overview'; render(); },
+  signin: el => { D.me = D.last = el.dataset.id; save(); location.hash = '#/overview'; render(); },
   toggleSide: () => {
     const mini = $('.app').classList.toggle('mini'), b = $('.side-t'), l = (mini ? 'Expand' : 'Collapse') + ' sidebar';
     b.setAttribute('aria-expanded', !mini); b.setAttribute('aria-label', l); b.title = l;
@@ -558,6 +593,7 @@ document.addEventListener('click', e => {
 });
 document.addEventListener('keydown', e => {
   if (e.key === 'Enter' && e.target.matches?.('tr[data-href]')) { location.hash = e.target.dataset.href; return; }
+  if (!me() && /^[1-9]$/.test(e.key) && !e.metaKey && !e.ctrlKey && !e.altKey) { $$('.si-acct')[e.key - 1]?.click(); return; }
   if (e.key === 'Escape') { if ($('#modalWrap') && !$('#modalWrap').hidden) closeModal(); else if ($('#drawer') && !$('#drawer').hidden) A.closeLayer(); return; }
   if (e.key === 'Tab') { // keep focus inside the open dialog
     const box = $('#modalWrap') && !$('#modalWrap').hidden ? $('#modal') : $('#drawer') && !$('#drawer').hidden ? $('#drawer') : null;
