@@ -365,7 +365,7 @@ function shell() {
   root.innerHTML = `<div class="app${mini ? ' mini' : ''}"><aside class="side" id="side">${brand()}
     <div class="side-coop"><span class="cb" aria-hidden="true">BM</span><span><b>${esc(D.coop.sh)}</b><small>${esc(D.coop.city)} · Admin</small></span></div>
     <nav class="nav" id="nav" aria-label="Main"></nav><div class="side-me" id="sideMe"></div></aside>
-    <div class="main-wrap"><header class="top"><button class="ib side-t" data-act="toggleSide" aria-controls="side" aria-expanded="${!mini}" aria-label="${mini ? 'Expand' : 'Collapse'} sidebar" title="${mini ? 'Expand' : 'Collapse'} sidebar">${ic('side', 19)}</button><span class="crumb" id="crumb"></span><span class="sync"><i aria-hidden="true"></i>Synced with the Fundo app</span></header><main class="main" id="main"></main></div></div>
+    <div class="main-wrap"><header class="top"><button class="ib side-t" data-act="toggleSide" aria-controls="side" aria-expanded="${!mini}" aria-label="${mini ? 'Expand' : 'Collapse'} sidebar" title="${mini ? 'Expand' : 'Collapse'} sidebar">${ic('side', 19)}</button><span class="crumb" id="crumb"></span></header><main class="main" id="main"></main></div></div>
   <div class="scrim" id="scrim" data-act="closeLayer"></div>
   <aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="drTitle" hidden></aside>
   <div class="modal-wrap" id="modalWrap" hidden><div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="mdTitle"></div></div>
@@ -380,8 +380,8 @@ function render() {
   const w = waiting().length, u = me();
   $('#nav').innerHTML = [['overview', 'grid', 'Overview'], ['loans', 'inbox', 'Loan applications', w], ['documents', 'doc', 'Documents'], ['releases', 'wallet', 'Releases'], ['members', 'users', 'Members'], ['products', 'card', 'Loan products'], ['activity', 'clock', 'Activity'], ...(can('staff.manage') ? [['staff', 'shield', 'Staff and roles']] : [])]
     .map(n => `<a href="#/${n[0]}" title="${n[2]}" ${n[0] === view ? 'aria-current="page"' : ''}>${ic(n[1], 19)}<span class="nl">${n[2]}</span>${n[3] ? `<span class="cnt" aria-label="${n[3]} waiting">${n[3]}</span>` : ''}</a>`).join('');
-  $('#sideMe').innerHTML = `<div class="row"><span class="av ink">${initials(u.name)}</span><span class="grow who"><b>${esc(u.name)}</b><span class="pill ${u.role === 'admin' ? 'purple' : u.role === 'credit' ? 'orange' : 'blue'}">${ROLES[u.role].n}</span></span></div>
-    <div class="acts"><button class="btn sm ghost" data-act="signout" title="Switch account" aria-label="Switch account">${ic('logout', 15)}<span>Switch account</span></button><button class="btn sm ghost" data-act="resetDemo" title="Reset sample data" aria-label="Reset sample data">${ic('refresh', 15)}</button></div>`;
+  $('#sideMe').innerHTML = `<div class="row"><span class="av ink">${initials(u.name)}</span><span class="grow who"><b>${esc(u.name)}</b><small>${ROLES[u.role].n}</small></span>
+    <span class="acts"><button class="ib" data-act="signout" title="Switch account" aria-label="Switch account">${ic('logout', 17)}</button><button class="ib" data-act="resetDemo" title="Reset sample data" aria-label="Reset sample data">${ic('refresh', 17)}</button></span></div>`;
   $('#crumb').textContent = VIEWS[view][0];
   $('#main').innerHTML = VIEWS[view][1]();
   if (view !== lastView) { window.scrollTo(0, 0); lastView = view; }

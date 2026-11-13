@@ -121,16 +121,18 @@ select.in{appearance:none;-webkit-appearance:none;padding-right:36px;background:
 .nav a[aria-current=page] svg{color:var(--coral);stroke-width:2.2}
 .nav .cnt{margin-left:auto;min-width:20px;height:20px;padding:0 6px;border-radius:99px;background:var(--red);color:#fff;font:700 11px/20px var(--font);text-align:center}
 .nav-h{margin:6px 10px 2px;font-size:12px;font-weight:600;color:var(--muted)}
-.side-me{margin-top:auto;padding:12px;border-radius:16px;background:var(--bg);box-shadow:0 0 0 1px var(--line)}
+.side-me{margin-top:auto;padding:12px 0 0 8px;border-top:1px solid var(--line)}
 .side-me .row{display:flex;align-items:center;gap:10px}
-.side-me b{display:block;font-size:13.5px}
-.side-me .acts{display:flex;gap:6px;margin-top:10px}
-.side-me .acts .btn{flex:1}
+.side-me .av{width:32px;height:32px;font-size:11.5px}
+.side-me b,.side-me small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.side-me b{font-size:13.5px}
+.side-me small{font-size:12px;color:var(--muted)}
+.side-me .acts{display:flex;flex-shrink:0}
+.side-me .ib{width:32px;height:32px}
+.side-me .ib:hover{background:color-mix(in srgb,var(--ink) 7%,transparent)}
 .main-wrap{min-width:0;display:flex;flex-direction:column}
 .top{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:12px;height:60px;padding:0 32px;background:color-mix(in srgb,#fff 80%,transparent);-webkit-backdrop-filter:blur(20px) saturate(180%);backdrop-filter:blur(20px) saturate(180%);border-bottom:1px solid var(--line)}
 .top .crumb{font-weight:600}
-.top .sync{margin-left:auto;display:inline-flex;align-items:center;gap:7px;font-size:13px;color:var(--muted)}
-.top .sync i{width:8px;height:8px;border-radius:50%;background:var(--teal);box-shadow:0 0 0 3px color-mix(in srgb,var(--teal) 20%,transparent)}
 .main{width:100%;max-width:1240px;padding:28px 32px 72px}
 .page-h{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:20px}
 .page-h h1{margin:0;font:700 30px/1.15 var(--display);letter-spacing:-.025em}
@@ -299,13 +301,12 @@ a.lrow:hover b{text-decoration:underline}
   .mini .brand-w,.mini .side-coop>span:not(.cb){display:none}
   .mini .side-coop{justify-content:center;padding:6px}
   .mini .nav a{justify-content:center;padding:0;position:relative}
-  .mini .nav .nl,.mini .side-me .acts .btn span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+  .mini .nav .nl{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
   .mini .nav .cnt{position:absolute;top:2px;right:2px;min-width:16px;height:16px;padding:0 4px;margin:0;font-size:10px;line-height:16px;box-shadow:0 0 0 2px var(--surface)}
-  .mini .side-me{padding:8px 4px;background:none;box-shadow:none}
-  .mini .side-me .row{justify-content:center}
+  .mini .side-me{padding:12px 0 0}
+  .mini .side-me .row{flex-direction:column;gap:6px}
   .mini .side-me .who{display:none}
-  .mini .side-me .acts{flex-direction:column;gap:6px}
-  .mini .side-me .acts .btn{flex:none;padding:0}
+  .mini .side-me .acts{flex-direction:column}
 }
 
 /* ---------- smaller screens ---------- */
@@ -319,10 +320,9 @@ a.lrow:hover b{text-decoration:underline}
   .side-coop,.nav-h{display:none}
   .nav{order:3;flex-direction:row;width:100%;overflow-x:auto}
   .nav a{flex-shrink:0}
-  .side-me{margin:0 0 0 auto;padding:6px;box-shadow:none;background:none}
-  .side-me .who,.side-me .acts .btn span{display:none}
+  .side-me{margin:0 0 0 auto;padding:0;border:0}
+  .side-me .who{display:none}
   .side-t{display:none}
-  .side-me .acts{margin:0}
   .top{padding:0 16px}
   .main{padding:20px 16px 56px}
   .hero{flex-direction:column;align-items:flex-start}
