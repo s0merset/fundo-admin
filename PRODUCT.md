@@ -24,7 +24,7 @@ Applications arrive already filled in from the member's phone, with documents at
 ## Capabilities and Constraints
 - Static prototype (index.html, app.js, styles.css) for GitHub Pages; sample data is seeded and saved in the browser's localStorage.
 - Sign-in is a prototype account picker, not real authentication; real staff accounts must be connected before going live.
-- The public landing page is a front door for existing co-op staff: it explains what Fundo Admin is and leads to sign-in. It does not sell to new co-ops.
+- The front door is a staff sign-in screen (same pattern as the member app: lime brand panel + plain sign-in). It does not sell or explain the product.
 
 ## Brand Commitments
 Name "Fundo" with its lime logo mark; "Fundo Admin" for the staff side. Plain, warm, direct copy in sentence case.

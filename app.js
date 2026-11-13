@@ -299,49 +299,20 @@ function dMember(m) {
   <span class="spacer"></span>${can('members.delete') ? `<button class="btn ghost red" data-act="memberDelete" data-id="${m.id}">${ic('trash', 16)} Delete</button>` : ''}</div>`;
 }
 
-/* ---------- landing (front door, before sign-in) ---------- */
-function landingView() {
-  drawerKey = ''; lastView = '';
-  const areas = [['grid', 'Overview', 'What is waiting today'], ['inbox', 'Loan applications', 'Review documents, approve and release'], ['users', 'Members', 'Records, savings and share capital'], ['shield', 'Staff and roles', 'Co-op admins only']];
-  root.innerHTML = `<div class="ld">
-  <header class="ld-top">${brand()}<a class="btn ghost" href="#/signin">Sign in</a></header>
-  <main>
-  <section class="ld-hero" aria-labelledby="ldTitle">
-    <h1 class="ld-h" id="ldTitle">${esc(D.coop.sh)} loan desk.</h1>
-    <div class="ld-act">
-      <p>Loan applications from the Fundo app, document checks, approvals, releases and member records. For ${esc(D.coop.sh)} staff.</p>
-      <div class="ld-btns"><a class="btn dark lg" href="#/signin">Sign in ${ic('chev', 18, 2.2)}</a></div>
-    </div>
-    <ul class="ld-cks">${areas.map(x => `<li><b>${ic(x[0], 18)}${x[1]}</b><span>${x[2]}</span></li>`).join('')}</ul>
-  </section>
-  <section class="ld-sec" aria-labelledby="ldRules">
-    <h2 id="ldRules">Loan products</h2>
-    <div class="ld-tbl" role="table" aria-label="Loan products">
-      <div class="ld-tr ld-th" role="row"><span role="columnheader">Loan</span><span role="columnheader">Monthly rate</span><span role="columnheader">Limit</span><span role="columnheader">Co-maker</span><span role="columnheader">Documents</span></div>
-      ${Object.values(PRODUCTS).map(p => `<div class="ld-tr" role="row"><b role="cell">${p.n}</b><span role="cell"><span class="tab">${p.rate}%</span> a month</span><span role="cell"><span class="tab">${p.mult}×</span> savings and shares, up to <span class="tab">${peso0(p.cap)}</span></span><span role="cell">${p.co ? 'Co-maker required' : 'No co-maker needed'}</span><span role="cell">Needs ${p.docs.map(d => DOCS[d]).join(', ')}</span></div>`).join('')}
-    </div>
-  </section>
-  <section class="ld-sec" aria-labelledby="ldRoles">
-    <h2 id="ldRoles">Access by role</h2>
-    <div class="ld-roles">${Object.values(ROLES).map(r => `<div><h3>${r.n}</h3><ul>${PERMS.filter(x => x[0] === 'view' || r.can.includes(x[0])).map(x => `<li>${x[1]}</li>`).join('')}</ul></div>`).join('')}</div>
-  </section>
-  <section class="ld-end">
-    <h2>Staff only.</h2>
-    <a class="btn dark lg" href="#/signin">Sign in ${ic('chev', 18, 2.2)}</a>
-    <p>${ic('lock', 14)} Need access or a role change? Ask your co-op admin. Prototype: sign-in picks a sample staff account.</p>
-  </section>
-  </main></div>`;
-  document.title = 'Sign in · Fundo Admin';
-}
-
 /* ---------- shell + render ---------- */
 const root = $('#root');
 let lastView = '', drawerKey = '', drawerFocus = null, modalFocus = null, modalSubmit = null;
+/* Front door: a staff sign-in, same pattern as the member app's lime welcome + plain sign-in screen. */
 function signinView() {
   drawerKey = ''; lastView = '';
-  root.innerHTML = `<main class="signin"><div class="si-card">${brand(26)}<h1>Sign in to Fundo Admin</h1><p class="mut">${esc(D.coop.n)} · staff only</p>
-  <div class="si-list">${D.staff.map(s => `<button class="si-acct" data-act="signin" data-id="${s.id}"><span class="av ink">${initials(s.name)}</span><span class="grow"><b>${esc(s.name)}</b><small>${esc(s.title)} · ${ROLES[s.role].n}</small></span>${ic('chev', 18)}</button>`).join('')}</div>
-  <p class="si-note">${ic('lock', 14)}<span>Prototype sign-in: pick an account to see what each role can do. Connect your co-op's staff accounts before going live.</span></p></div></main>`;
+  root.innerHTML = `<div class="signin">
+  <aside class="si-brand" aria-hidden="true"><div class="si-mark">${logo(64)}</div><div><div class="si-wm">fundo <span>admin</span></div><p>Loan desk for co-op staff.</p></div></aside>
+  <main class="si-main"><div class="si-card">
+    <div class="si-coop"><span class="cb">${esc(D.coop.sh.split(' ').map(w => w[0]).join('').slice(0, 2))}</span><span><b>${esc(D.coop.n)}</b><small>${esc(D.coop.city)} · Staff console</small></span></div>
+    <h1>Sign in</h1><p class="mut">Choose your staff account. What you can do depends on your role.</p>
+    <div class="si-list">${D.staff.map(s => `<button class="si-acct" data-act="signin" data-id="${s.id}"><span class="av ink">${initials(s.name)}</span><span class="grow"><b>${esc(s.name)}</b><small>${esc(s.title)} · ${ROLES[s.role].n}</small></span>${ic('chev', 18)}</button>`).join('')}</div>
+    <p class="si-note">${ic('lock', 14)}<span>Prototype sign-in: pick a sample account. Need access or a role change? Ask your co-op admin.</span></p>
+  </div></main></div>`;
   document.title = 'Sign in · Fundo Admin';
 }
 function shell() {
@@ -357,7 +328,7 @@ function shell() {
 }
 const VIEWS = { overview: ['Overview', vOverview], loans: ['Loan applications', vLoans], members: ['Members', vMembers], staff: ['Staff and roles', vStaff] };
 function render() {
-  if (!me()) { location.hash === '#/signin' ? signinView() : landingView(); return; }
+  if (!me()) { signinView(); return; }
   if (!$('#nav')) shell();
   let [, view, id] = location.hash.split('/');
   if (!VIEWS[view] || (view === 'staff' && !can('staff.manage'))) view = 'overview';
