@@ -157,11 +157,15 @@ function checks(a) {
 const blockers = a => { const p = PRODUCTS[a.product], r = []; if (a.docs.some(d => d.state !== 'verified')) r.push('verify every document'); if (p.co && !a.comaker.confirmed) r.push('get the co-maker\'s confirmation'); return r; };
 
 /* ---------- views ---------- */
-const UI = { lf: 'waiting', lq: '', mf: 'all', mq: '' };
+const UI = { lf: 'waiting', lq: '', mf: 'all', mq: '', df: 'todo', af: 'all' };
 const statusPill = a => `<span class="pill ${STATUS[a.status][1]}">${STATUS[a.status][0]}</span>${a.waiting && a.status === 'review' ? ' <span class="pill grey">Waiting on member</span>' : ''}`;
 function capPill(a) { const r = calc(a).ratio; return `<span class="pill ${r <= 30 ? 'teal' : r <= 40 ? 'orange' : 'red'}">${r.toFixed(0)}% of pay</span>`; }
 function docPill(a) { const v = a.docs.filter(d => d.state === 'verified').length, f = a.docs.some(d => d.state === 'flagged'); return `<span class="pill ${f ? 'red' : v === a.docs.length ? 'teal' : 'grey'}">${f ? ic('flag', 12, 2.4) : ''}${v}/${a.docs.length} verified</span>`; }
 
+function logRow(l) {
+  const s = staff(l.by), tag = l.ref ? 'a' : 'div';
+  return `<${tag}${l.ref ? ` href="${l.ref}"` : ''} class="lrow"><span class="av ${s ? 'ink' : ''}">${s ? initials(s.name) : ic('user', 16)}</span><span class="grow"><b style="font-weight:500">${s ? `<strong>${esc(s.name)}</strong> ` : ''}${esc(l.text)}</b><small>${ago(l.at)}${s ? '' : ' · from the Fundo app'}</small></span></${tag}>`;
+}
 function vOverview() {
   const w = waiting(), amt = sum(w, a => a.amount), old = w.slice().sort((a, b) => a.submitted - b.submitted)[0];
   const rel = D.apps.filter(a => a.status === 'released' && a.releasedAt > now() - 30 * DAY);
@@ -186,8 +190,8 @@ function vOverview() {
     <section class="card"><div class="ghd"><h2>Needs attention</h2><a href="#/loans">See all</a></div>
       ${queue.length ? queue.map(a => { const m = member(a.memberId), late = now() - a.submitted > 2 * DAY; return `<a class="lrow" href="#/loans/${a.id}"><span class="av">${initials(full(m))}</span><span class="grow"><b>${esc(full(m))}</b><small>${PRODUCTS[a.product].n} · ${peso0(a.amount)} · ${a.term} months</small></span><span class="rv">${statusPill(a)}<small class="${late ? 'warn' : ''}">Sent ${ago(a.submitted)}</small></span></a>`; }).join('') : '<p class="empty">Nothing waiting. Every application has a decision.</p>'}
     </section>
-    <section class="card"><div class="ghd"><h2>Recent activity</h2></div>
-      ${D.log.slice(0, 7).map(l => { const s = staff(l.by); return `<${l.ref ? `a href="${l.ref}"` : 'div'} class="lrow"><span class="av ${s ? 'ink' : ''}">${s ? initials(s.name) : ic('user', 16)}</span><span class="grow"><b style="font-weight:500">${s ? `<strong>${esc(s.name)}</strong> ` : ''}${esc(l.text)}</b><small>${ago(l.at)}${s ? '' : ' · from the Fundo app'}</small></span></${l.ref ? 'a' : 'div'}>`; }).join('')}
+    <section class="card"><div class="ghd"><h2>Recent activity</h2><a href="#/activity">See all</a></div>
+      ${D.log.slice(0, 7).map(logRow).join('')}
     </section>
   </div>`;
 }
@@ -244,6 +248,47 @@ function vStaff() {
   <div class="cols"><section class="card"><div class="ghd"><h2>Staff</h2></div>${D.staff.map(row).join('')}</section>
   <section class="card"><div class="ghd"><h2>What each role can do</h2></div><table class="perm"><thead><tr><th></th>${Object.values(ROLES).map(r => `<th class="c">${r.n.replace(' ', '<br>')}</th>`).join('')}</tr></thead>
   <tbody>${PERMS.map(p => `<tr><td>${p[1]}</td>${Object.keys(ROLES).map(r => { const y = p[0] === 'view' || ROLES[r].can.includes(p[0]); return `<td class="c ${y ? 'y' : 'n'}">${y ? ic('check', 17, 2.6) + '<span class="sr">Yes</span>' : '—'}</td>`; }).join('')}</tr>`).join('')}</tbody></table></section></div>`;
+}
+/* ---------- more tabs: all read from the same applications, rules and log ---------- */
+const isOpen = a => a.status === 'new' || a.status === 'review';
+const who = (a, base) => { const m = member(a.memberId); return `<div class="who"><span class="av">${initials(full(m))}</span><span><a href="#/${base}/${a.id}">${esc(full(m))}</a><small>${esc(m?.no || '')} · ${a.id}</small></span></div>`; };
+const DOCF = { todo: x => x.d.state === 'pending' && isOpen(x.a), flagged: x => x.d.state === 'flagged', verified: x => x.d.state === 'verified', all: () => true };
+const allDocs = () => D.apps.flatMap(a => a.docs.map(d => ({ a, d })));
+function vDocuments() {
+  const docs = allDocs(), l = docs.filter(DOCF[UI.df]).sort((x, y) => x.a.submitted - y.a.submitted);
+  const chip = (k, t) => `<button class="chip" data-act="dfilter" data-k="${k}" aria-pressed="${UI.df === k}">${t}<span class="c">${docs.filter(DOCF[k]).length}</span></button>`;
+  const pill = d => `<span class="pill ${d.state === 'verified' ? 'teal' : d.state === 'flagged' ? 'red' : 'grey'}">${d.state === 'flagged' ? ic('flag', 12, 2.4) : ''}${d.state[0].toUpperCase() + d.state.slice(1)}</span>`;
+  return `<div class="page-h"><div><h1>Documents</h1><p class="mut">Every file members attached to an application, oldest first. Open one to view it and verify or flag it.</p></div>${can('docs.verify') ? '' : lockNote('Credit managers and admins verify documents')}</div>
+  <div class="toolbar"><div class="chips" role="group" aria-label="Filter documents">${chip('todo', 'To check')}${chip('flagged', 'Flagged')}${chip('verified', 'Verified')}${chip('all', 'All')}</div></div>
+  <div class="tbl-wrap"><table class="tbl"><thead><tr><th>Document</th><th>Applicant</th><th>Loan</th><th>Sent</th><th>State</th></tr></thead><tbody>${l.length ? l.map(({ a, d }) => `<tr data-href="#/documents/${a.id}" tabindex="0"><td><b>${DOCS[d.k]}</b><small>${FILES[d.k]}${d.note ? ` · <span class="warn">${esc(d.note)}</span>` : ''}</small></td>
+    <td>${who(a, 'documents')}</td><td>${PRODUCTS[a.product].n}<small>${peso0(a.amount)}</small></td><td class="tab">${ago(a.submitted)}</td><td>${pill(d)}${isOpen(a) ? '' : ' ' + statusPill(a)}</td></tr>`).join('')
+    : `<tr><td colspan="5" class="empty">${UI.df === 'todo' ? 'Nothing to check. Every open application has its documents reviewed.' : 'No documents here.'}</td></tr>`}</tbody></table></div>`;
+}
+function vReleases() {
+  const ready = D.apps.filter(a => a.status === 'approved').sort((a, b) => a.decision.at - b.decision.at);
+  const done = D.apps.filter(a => a.status === 'released').sort((a, b) => b.releasedAt - a.releasedAt);
+  const net = a => { const k = calc(a); return `<td class="num"><b>${peso(k.net)}</b><small>of ${peso0(a.amount)}</small></td>`; };
+  const tr = (a, cells) => `<tr data-href="#/releases/${a.id}" tabindex="0"><td>${who(a, 'releases')}</td><td>${PRODUCTS[a.product].n}<small>${a.term} months</small></td>${net(a)}${cells}</tr>`;
+  return `<div class="page-h"><div><h1>Releases</h1><p class="mut">Approved loans waiting for payout, and what has been paid out by GCash or Maya.</p></div>${can('loans.decide') ? '' : lockNote('Credit managers and admins release loans')}</div>
+  <h2 class="sub-h">Ready to release <span class="pill ${ready.length ? 'orange' : 'grey'}">${ready.length}</span>${ready.length ? `<small class="mut">${peso(sum(ready, a => calc(a).net))} to send</small>` : ''}</h2>
+  <div class="tbl-wrap"><table class="tbl"><thead><tr><th>Member</th><th>Loan</th><th class="num">Net to send</th><th>Send by</th><th>Approved</th></tr></thead><tbody>${ready.length ? ready.map(a => tr(a, `<td>${esc(a.disb)}</td><td class="tab">${ago(a.decision.at)}<small>by ${esc(staff(a.decision.by)?.name || 'former staff')}</small></td>`)).join('')
+    : '<tr><td colspan="5" class="empty">Nothing waiting for payout.</td></tr>'}</tbody></table></div>
+  <h2 class="sub-h">Released <span class="pill grey">${done.length}</span>${done.length ? `<small class="mut">${peso(sum(done, a => calc(a).net))} sent</small>` : ''}</h2>
+  <div class="tbl-wrap"><table class="tbl"><thead><tr><th>Member</th><th>Loan</th><th class="num">Net sent</th><th>Sent by</th><th>Reference</th><th>Released</th></tr></thead><tbody>${done.length ? done.map(a => tr(a, `<td>${esc(a.disb)}</td><td class="tab">${esc(a.releaseRef)}</td><td class="tab">${dfmt(a.releasedAt)}</td>`)).join('')
+    : '<tr><td colspan="6" class="empty">No loans released yet.</td></tr>'}</tbody></table></div>`;
+}
+function vProducts() {
+  return `<div class="page-h"><div><h1>Loan products</h1><p class="mut">The rules every application is checked against. They match what members see in the Fundo app.</p></div>${lockNote('Set by the board. Read-only in this prototype')}</div>
+  <div class="tbl-wrap"><table class="tbl flat"><thead><tr><th>Loan</th><th>Monthly rate</th><th>Limit</th><th>Co-maker</th><th>Documents needed</th><th class="num">Applications</th></tr></thead><tbody>${Object.entries(PRODUCTS).map(([k, p]) => { const n = D.apps.filter(a => a.product === k), o = n.filter(isOpen).length;
+    return `<tr><td><b>${p.n}</b></td><td class="tab">${p.rate}% a month</td><td><span class="tab">${p.mult}×</span> savings and shares<small>up to ${peso0(p.cap)}</small></td><td>${p.co ? 'Required' : 'Not needed'}</td><td>${p.docs.map(d => DOCS[d]).join(', ')}</td><td class="num">${n.length}<small>${o} open</small></td></tr>`; }).join('')}</tbody></table></div>
+  <p class="mut" style="margin:14px 4px 0;font-size:13px">Every loan also takes a 1% service fee and a 2% share capital build-up from the amount released.</p>`;
+}
+function vActivity() {
+  const F = { all: () => true, staff: l => l.by, app: l => !l.by }, l = D.log.filter(F[UI.af]);
+  const chip = (k, t) => `<button class="chip" data-act="afilter" data-k="${k}" aria-pressed="${UI.af === k}">${t}<span class="c">${D.log.filter(F[k]).length}</span></button>`;
+  return `<div class="page-h"><div><h1>Activity</h1><p class="mut">Who did what, newest first. Keeps the last 100 entries in this prototype.</p></div></div>
+  <div class="toolbar"><div class="chips" role="group" aria-label="Filter activity">${chip('all', 'All')}${chip('staff', 'By staff')}${chip('app', 'From the Fundo app')}</div></div>
+  <section class="card" style="padding-top:0">${l.length ? l.map(logRow).join('') : '<p class="empty">Nothing here yet.</p>'}</section>`;
 }
 const lockNote = t => `<span class="dr-f lock" style="border:0;padding:0;background:none">${ic('lock', 15)} ${t}</span>`;
 
@@ -326,14 +371,14 @@ function shell() {
   <div class="modal-wrap" id="modalWrap" hidden><div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="mdTitle"></div></div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>`;
 }
-const VIEWS = { overview: ['Overview', vOverview], loans: ['Loan applications', vLoans], members: ['Members', vMembers], staff: ['Staff and roles', vStaff] };
+const VIEWS = { overview: ['Overview', vOverview], loans: ['Loan applications', vLoans], documents: ['Documents', vDocuments], releases: ['Releases', vReleases], members: ['Members', vMembers], products: ['Loan products', vProducts], activity: ['Activity', vActivity], staff: ['Staff and roles', vStaff] };
 function render() {
   if (!me()) { signinView(); return; }
   if (!$('#nav')) shell();
   let [, view, id] = location.hash.split('/');
   if (!VIEWS[view] || (view === 'staff' && !can('staff.manage'))) view = 'overview';
   const w = waiting().length, u = me();
-  $('#nav').innerHTML = [['overview', 'grid', 'Overview'], ['loans', 'inbox', 'Loan applications', w], ['members', 'users', 'Members'], ...(can('staff.manage') ? [['staff', 'shield', 'Staff and roles']] : [])]
+  $('#nav').innerHTML = [['overview', 'grid', 'Overview'], ['loans', 'inbox', 'Loan applications', w], ['documents', 'doc', 'Documents'], ['releases', 'wallet', 'Releases'], ['members', 'users', 'Members'], ['products', 'card', 'Loan products'], ['activity', 'clock', 'Activity'], ...(can('staff.manage') ? [['staff', 'shield', 'Staff and roles']] : [])]
     .map(n => `<a href="#/${n[0]}" title="${n[2]}" ${n[0] === view ? 'aria-current="page"' : ''}>${ic(n[1], 19)}<span class="nl">${n[2]}</span>${n[3] ? `<span class="cnt" aria-label="${n[3]} waiting">${n[3]}</span>` : ''}</a>`).join('');
   $('#sideMe').innerHTML = `<div class="row"><span class="av ink">${initials(u.name)}</span><span class="grow who"><b>${esc(u.name)}</b><span class="pill ${u.role === 'admin' ? 'purple' : u.role === 'credit' ? 'orange' : 'blue'}">${ROLES[u.role].n}</span></span></div>
     <div class="acts"><button class="btn sm ghost" data-act="signout" title="Switch account" aria-label="Switch account">${ic('logout', 15)}<span>Switch account</span></button><button class="btn sm ghost" data-act="resetDemo" title="Reset sample data" aria-label="Reset sample data">${ic('refresh', 15)}</button></div>`;
@@ -342,7 +387,7 @@ function render() {
   if (view !== lastView) { window.scrollTo(0, 0); lastView = view; }
   document.title = VIEWS[view][0] + ' · Fundo Admin';
   let html = '', key = '';
-  if (id && view === 'loans' && app(id)) { html = dApp(app(id)); key = 'a' + id; }
+  if (id && ['loans', 'documents', 'releases'].includes(view) && app(id)) { html = dApp(app(id)); key = 'a' + id; }
   else if (id && view === 'members' && member(id)) { html = dMember(member(id)); key = 'm' + id; }
   syncDrawer(html, key);
 }
@@ -400,6 +445,8 @@ const A = {
   closeModal: () => closeModal(),
   lfilter: el => { UI.lf = el.dataset.k; render(); },
   mfilter: el => { UI.mf = el.dataset.k; render(); },
+  dfilter: el => { UI.df = el.dataset.k; render(); },
+  afilter: el => { UI.af = el.dataset.k; render(); },
 
   startReview: el => { const a = app(el.dataset.id); a.status = 'review'; a.reviewAt = now(); a.reviewBy = D.me; log(`started reviewing ${full(member(a.memberId))}'s ${PRODUCTS[a.product].n}`, '#/loans/' + a.id); commit('Review started'); },
   docVerify: el => { const a = app(el.dataset.id), d = a.docs.find(x => x.k === el.dataset.k); d.state = 'verified'; d.note = ''; log(`verified the ${DOCS[d.k].toLowerCase()} for ${full(member(a.memberId))}`, '#/loans/' + a.id); closeModal(); commit(DOCS[d.k] + ' verified'); },
