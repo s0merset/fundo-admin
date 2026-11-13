@@ -348,21 +348,10 @@ function dMember(m) {
 const root = $('#root');
 let lastView = '', drawerKey = '', drawerFocus = null, modalFocus = null, modalSubmit = null;
 /* Front door: a staff sign-in, same pattern as the member app's lime welcome + plain sign-in screen. */
-/* What an account can do and what is waiting on it, shown beside the account list. */
-function rolePreview(s) {
-  const can = ROLES[s.role].can, todo = [];
-  const n = (c, one, many) => c && todo.push(`<li><b class="tab">${c}</b>${c === 1 ? one : many}</li>`);
-  if (can.includes('loans.decide')) { n(waiting().length, 'application waiting for a decision', 'applications waiting for a decision'); n(D.apps.filter(a => a.status === 'approved').length, 'approved loan to release', 'approved loans to release'); }
-  if (can.includes('docs.verify')) n(allDocs().filter(DOCF.todo).length, 'document to check', 'documents to check');
-  if (can.includes('members.edit')) n(D.members.filter(m => m.status === 'Active').length, 'active member record to keep', 'active member records to keep');
-  return `<div class="si-rh"><span class="pill lime">${ROLES[s.role].n}</span><small>${esc(s.name.split(' ')[0])}'s desk</small></div>
-    <ul class="si-todo">${todo.join('') || '<li>Nothing waiting on this role right now.</li>'}</ul>
-    <ul class="si-perms">${PERMS.map(p => { const y = p[0] === 'view' || can.includes(p[0]); return `<li class="${y ? 'y' : 'n'}">${ic(y ? 'check' : 'lock', 14, y ? 2.6 : 1.8)}<span>${p[1]}${y ? '' : '<span class="sr"> (locked)</span>'}</span></li>`; }).join('')}</ul>`;
-}
 function signinView() {
   drawerKey = ''; lastView = '';
   const w = waiting(), old = w.slice().sort((a, b) => a.submitted - b.submitted)[0], docs = allDocs(), flagged = docs.filter(DOCF.flagged).length, ready = D.apps.filter(a => a.status === 'approved');
-  const first = staff(D.last) || D.staff[0];
+  const admin = D.staff.find(x => x.role === 'admin');
   const stat = (n, l, e) => `<div class="si-stat"><b class="tab" data-n="${n}">${n}</b><span>${l}<small>${e}</small></span></div>`;
   root.innerHTML = `<div class="signin">
   <aside class="si-brand"><video class="si-vid" muted loop playsinline aria-hidden="true"></video><i class="si-glow" aria-hidden="true"></i>
@@ -376,18 +365,16 @@ function signinView() {
   <main class="si-main"><div class="si-card">
     <header class="si-box"><div class="si-coop"><span class="cb">${esc(D.coop.sh.split(' ').map(w => w[0]).join('').slice(0, 2))}</span><span><b>${esc(D.coop.n)}</b><small>${esc(D.coop.city)} · Staff console</small></span></div>
     <h1>Sign in</h1><p class="mut">Choose your staff account. What you can do depends on your role.</p></header>
-    <div class="si-cols"><div class="si-box">
+    <div class="si-box">
       <div class="si-lh"><span>Staff accounts</span><span class="tab">${D.staff.length}</span></div>
-      <div class="si-list">${D.staff.map((s, i) => `<button class="si-acct${s === first ? ' on' : ''}" data-act="signin" data-id="${s.id}"><span class="av ink">${initials(s.name)}</span><span class="grow"><b>${esc(s.name)}${s.id === D.last ? ' <span class="pill grey">Last used</span>' : ''}</b><small>${esc(s.title === ROLES[s.role].n ? s.title : s.title + ' · ' + ROLES[s.role].n)}</small></span>${i < 9 ? `<kbd aria-hidden="true">${i + 1}</kbd>` : ''}${ic('chev', 18)}</button>`).join('')}</div>
+      <div class="si-list">${D.staff.map((s, i) => `<button class="si-acct" data-act="signin" data-id="${s.id}"><span class="av ink">${initials(s.name)}</span><span class="grow"><b>${esc(s.name)}${s.id === D.last ? ' <span class="pill grey">Last used</span>' : ''}</b><small>${esc(s.title === ROLES[s.role].n ? s.title : s.title + ' · ' + ROLES[s.role].n)}</small></span>${i < 9 ? `<kbd aria-hidden="true">${i + 1}</kbd>` : ''}${ic('chev', 18)}</button>`).join('')}</div>
       <p class="si-keys">Press a number key to sign in as that account.</p>
-    </div><section class="si-role" id="siRole" aria-label="What this account can do">${rolePreview(first)}</section></div>
-    <p class="si-note si-box">${ic('lock', 14)}<span>Prototype sign-in: pick a sample account. Need access or a role change? Ask your co-op admin.</span></p>
+    </div>
+    <p class="si-note si-box">${ic('lock', 14)}<span>Prototype sign-in: pick a sample account.</span></p>
+    <footer class="si-foot"><span>© ${new Date().getFullYear()} ${esc(D.coop.sh)}</span><nav aria-label="Footer">${admin ? `<a href="mailto:${esc(admin.email)}?subject=Fundo%20Admin%20access">Request access</a>` : ''}<a href="https://github.com/s0merset/fundo-admin" target="_blank" rel="noopener">View source</a></nav></footer>
   </div></main></div>`;
   document.title = 'Sign in · Fundo Admin';
   const still = matchMedia('(prefers-reduced-motion:reduce)').matches, brand = $('.si-brand');
-  // hovering or tabbing to an account previews its role
-  const show = e => { const b = e.target.closest('.si-acct'); if (!b || b.classList.contains('on')) return; $$('.si-acct').forEach(x => x.classList.toggle('on', x === b)); $('#siRole').innerHTML = rolePreview(staff(b.dataset.id)); };
-  $('.si-list').addEventListener('mouseover', show); $('.si-list').addEventListener('focusin', show);
   // clock; the timer stops itself once the sign-in screen is gone
   const clock = () => { const c = $('#siClock'); if (!c) return clearInterval(timer); c.textContent = new Date().toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }); };
   const timer = setInterval(clock, 15000); clock();
