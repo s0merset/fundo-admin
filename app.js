@@ -351,7 +351,7 @@ let lastView = '', drawerKey = '', drawerFocus = null, modalFocus = null, modalS
 function signinView() {
   drawerKey = ''; lastView = '';
   root.innerHTML = `<div class="signin">
-  <aside class="si-brand" aria-hidden="true"><video class="si-vid" muted loop playsinline poster="media/signin.jpg"></video><div class="si-mark">${logo(64)}</div><span class="wm">${logo(420, '#191C15', '#191C15')}</span><div><div class="si-wm">fundo <span>admin</span></div><p>Loan desk for co-op staff.</p></div></aside>
+  <aside class="si-brand" aria-hidden="true"><video class="si-vid" muted loop playsinline></video><div class="si-mark">${logo(64)}</div><span class="wm">${logo(420, '#191C15', '#191C15')}</span><div><div class="si-wm">fundo <span>admin</span></div><p>Loan desk for co-op staff.</p></div></aside>
   <main class="si-main"><div class="si-card">
     <div class="si-coop"><span class="cb">${esc(D.coop.sh.split(' ').map(w => w[0]).join('').slice(0, 2))}</span><span><b>${esc(D.coop.n)}</b><small>${esc(D.coop.city)} · Staff console</small></span></div>
     <h1>Sign in</h1><p class="mut">Choose your staff account. What you can do depends on your role.</p>
