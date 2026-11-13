@@ -100,14 +100,14 @@ select.in{appearance:none;-webkit-appearance:none;padding-right:36px;background:
 .si-stat small{display:block;font-size:12.5px;font-weight:400;opacity:.75}
 .si-main{display:grid;place-items:center;padding:32px 24px}
 .si-card{width:min(460px,100%)}
-.si-cols{display:grid;gap:16px;margin-top:22px}
+.si-cols{display:grid;gap:16px;margin-top:16px}
 .si-cols .si-lh{margin-top:0}
 .si-acct.on{background:color-mix(in srgb,var(--lime) 22%,var(--surface));box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--coral) 35%,transparent)}
 .si-acct.on .av{background:var(--lime);color:var(--ink)}
 .si-acct kbd{flex-shrink:0;min-width:22px;padding:3px 0;border-radius:7px;background:var(--bg);box-shadow:inset 0 0 0 1px var(--line);text-align:center;font:600 12px var(--font);color:var(--muted)}
 .si-keys{margin:10px 0 0;font-size:12.5px;color:var(--muted)}
 @media (hover:none){.si-acct kbd,.si-keys{display:none}}
-.si-role{align-self:start;padding:16px;border-radius:20px;box-shadow:inset 0 0 0 1px var(--line)}
+.si-role,.si-box{padding:16px;border-radius:20px;box-shadow:inset 0 0 0 1px var(--line)}
 .si-rh{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .si-rh small{font-size:12.5px;color:var(--muted)}
 .si-role ul{list-style:none;margin:12px 0 0;padding:0;display:flex;flex-direction:column;gap:7px;font-size:13.5px;line-height:1.35}
@@ -117,7 +117,7 @@ select.in{appearance:none;-webkit-appearance:none;padding-right:36px;background:
 .si-perms svg{flex-shrink:0;align-self:center}
 .si-perms .y svg{color:var(--teal)}
 .si-perms .n{color:var(--muted)}
-@media (min-width:1180px){.si-card{width:min(800px,100%)}.si-cols{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px}}
+@media (min-width:1180px){.si-card{width:min(800px,100%)}.si-cols{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
 /* the member app's welcome entrance: one short staggered rise */
 @keyframes rise{from{opacity:0;transform:translateY(12px)}}
 .si-card>*{animation:rise .4s var(--ease-out) both}
@@ -126,8 +126,8 @@ select.in{appearance:none;-webkit-appearance:none;padding-right:36px;background:
 .si-coop .cb{width:44px;height:44px;font-size:14px}
 .si-coop b{display:block;font-size:15px;line-height:1.25}
 .si-coop small{display:block;margin-top:2px;font-size:13px;color:var(--muted)}
-.si-card h1{margin:28px 0 0;font:700 28px/1.15 var(--display);letter-spacing:-.02em}
-.si-card>p.mut{margin:8px 0 0;font-size:15px;line-height:1.4}
+.si-card h1{margin:20px 0 0;font:700 28px/1.15 var(--display);letter-spacing:-.02em}
+.si-card p.mut{margin:8px 0 0;font-size:15px;line-height:1.4}
 .si-lh{display:flex;justify-content:space-between;margin-top:22px;font-size:12.5px;font-weight:600;color:var(--muted)}
 .si-list{display:flex;flex-direction:column;gap:8px;margin-top:8px}
 .si-acct{display:flex;align-items:center;gap:12px;width:100%;padding:12px;border:0;border-radius:16px;background:var(--surface);text-align:left;transition:transform .12s var(--ease-out),background .2s ease,box-shadow .2s ease}
@@ -139,7 +139,7 @@ select.in{appearance:none;-webkit-appearance:none;padding-right:36px;background:
 .si-acct:hover>svg{transform:translateX(3px);color:var(--ink)}
 .si-acct b{display:block;font-size:15px}
 .si-acct small{display:block;font-size:12.5px;color:var(--muted)}
-.si-note{display:flex;gap:8px;align-items:flex-start;margin:20px 0 0;font-size:12.5px;color:var(--muted)}
+.si-note{display:flex;gap:8px;align-items:flex-start;margin:16px 0 0;font-size:12.5px;color:var(--muted)}
 .si-note svg{flex-shrink:0;margin-top:2px}
 .grow{flex:1;min-width:0}
 @media (max-width:760px){

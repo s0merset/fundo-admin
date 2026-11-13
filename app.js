@@ -374,14 +374,14 @@ function signinView() {
         ${stat(ready.length, 'approved, ready to release', ready.length ? peso0(sum(ready, a => a.amount)) + ' to pay out by GCash or Maya' : 'Nothing to pay out')}
       </div></div></aside>
   <main class="si-main"><div class="si-card">
-    <div class="si-coop"><span class="cb">${esc(D.coop.sh.split(' ').map(w => w[0]).join('').slice(0, 2))}</span><span><b>${esc(D.coop.n)}</b><small>${esc(D.coop.city)} · Staff console</small></span></div>
-    <h1>Sign in</h1><p class="mut">Choose your staff account. What you can do depends on your role.</p>
-    <div class="si-cols"><div>
+    <header class="si-box"><div class="si-coop"><span class="cb">${esc(D.coop.sh.split(' ').map(w => w[0]).join('').slice(0, 2))}</span><span><b>${esc(D.coop.n)}</b><small>${esc(D.coop.city)} · Staff console</small></span></div>
+    <h1>Sign in</h1><p class="mut">Choose your staff account. What you can do depends on your role.</p></header>
+    <div class="si-cols"><div class="si-box">
       <div class="si-lh"><span>Staff accounts</span><span class="tab">${D.staff.length}</span></div>
       <div class="si-list">${D.staff.map((s, i) => `<button class="si-acct${s === first ? ' on' : ''}" data-act="signin" data-id="${s.id}"><span class="av ink">${initials(s.name)}</span><span class="grow"><b>${esc(s.name)}${s.id === D.last ? ' <span class="pill grey">Last used</span>' : ''}</b><small>${esc(s.title === ROLES[s.role].n ? s.title : s.title + ' · ' + ROLES[s.role].n)}</small></span>${i < 9 ? `<kbd aria-hidden="true">${i + 1}</kbd>` : ''}${ic('chev', 18)}</button>`).join('')}</div>
       <p class="si-keys">Press a number key to sign in as that account.</p>
     </div><section class="si-role" id="siRole" aria-label="What this account can do">${rolePreview(first)}</section></div>
-    <p class="si-note">${ic('lock', 14)}<span>Prototype sign-in: pick a sample account. Need access or a role change? Ask your co-op admin.</span></p>
+    <p class="si-note si-box">${ic('lock', 14)}<span>Prototype sign-in: pick a sample account. Need access or a role change? Ask your co-op admin.</span></p>
   </div></main></div>`;
   document.title = 'Sign in · Fundo Admin';
   const still = matchMedia('(prefers-reduced-motion:reduce)').matches, brand = $('.si-brand');
