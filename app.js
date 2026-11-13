@@ -350,15 +350,47 @@ let lastView = '', drawerKey = '', drawerFocus = null, modalFocus = null, modalS
 /* Front door: a staff sign-in, same pattern as the member app's lime welcome + plain sign-in screen. */
 function signinView() {
   drawerKey = ''; lastView = '';
+  const w = waiting().sort((a, b) => a.submitted - b.submitted), n = w.length;
+  const TK = { salary: 't-blue', emergency: 't-red', livelihood: 't-teal', starter: 't-purple' };
+  // no member names out here: the panel shows before anyone has signed in
   root.innerHTML = `<div class="signin">
-  <aside class="si-brand" aria-hidden="true"><div class="si-mark">${logo(64)}</div><span class="wm">${logo(420, '#191C15', '#191C15')}</span><div><div class="si-wm">fundo <span>admin</span></div><p>Loan desk for co-op staff.</p></div></aside>
+  <aside class="si-brand" aria-hidden="true"><span class="wm">${logo(420, '#191C15', '#191C15')}</span>
+    <div class="si-lock"><div class="si-mark">${logo(48)}</div><div><div class="si-wm">fundo <span>admin</span></div><p class="si-tag">Loan desk for co-op staff.</p></div><span class="si-date">${new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</span></div>
+    <div class="si-desk">
+      <div class="si-q"><p>Waiting for a decision</p><div class="si-n"><span data-to="${n}">${n}</span> <small>application${n === 1 ? '' : 's'}</small></div>
+        <p class="tab"><span data-to="${sum(w, a => a.amount)}" data-peso>${peso0(sum(w, a => a.amount))}</span> requested${n ? ` · oldest sent ${ago(w[0].submitted)}` : ''}</p></div>
+      ${n ? `<div class="si-stack">${w.map((a, i) => `<div class="si-tk" data-pos="${i}"><span class="tile ${TK[a.product]}">${ic('card', 17)}</span><span class="grow"><b>${PRODUCTS[a.product].n} · ${peso0(a.amount)}</b><small>${a.id} · sent ${ago(a.submitted)}</small></span><span class="pill ${STATUS[a.status][1]}">${STATUS[a.status][0]}</span></div>`).join('')}</div>` : '<p class="si-none">Nothing waiting. Every application has a decision.</p>'}
+      <div class="si-flow"><small>Applications by stage</small><ol class="si-pipe">${['new', 'review', 'approved', 'released'].map(k => `<li><b>${D.apps.filter(a => a.status === k).length}</b><span>${STATUS[k][0]}</span></li>`).join('')}</ol></div>
+      <div class="si-role"><b>What each role can do</b><small>Point at an account to see.</small><ul>${PERMS.map(([k, t]) => `<li data-p="${k}"><i>${ic('check', 12, 2.8)}${ic('lock', 11, 2.2)}</i>${t}</li>`).join('')}</ul></div>
+    </div></aside>
   <main class="si-main"><div class="si-card">
     <div class="si-coop"><span class="cb">${esc(D.coop.sh.split(' ').map(w => w[0]).join('').slice(0, 2))}</span><span><b>${esc(D.coop.n)}</b><small>${esc(D.coop.city)} · Staff console</small></span></div>
     <h1>Sign in</h1><p class="mut">Choose your staff account. What you can do depends on your role.</p>
+    <div class="si-lh"><span>Staff accounts</span><span class="tab">${D.staff.length}</span></div>
     <div class="si-list">${D.staff.map(s => `<button class="si-acct" data-act="signin" data-id="${s.id}"><span class="av ink">${initials(s.name)}</span><span class="grow"><b>${esc(s.name)}</b><small>${esc(s.title === ROLES[s.role].n ? s.title : s.title + ' · ' + ROLES[s.role].n)}</small></span>${ic('chev', 18)}</button>`).join('')}</div>
     <p class="si-note">${ic('lock', 14)}<span>Prototype sign-in: pick a sample account. Need access or a role change? Ask your co-op admin.</span></p>
   </div></main></div>`;
   document.title = 'Sign in · Fundo Admin';
+  // listeners sit on nodes this view owns, so they go away with the next render
+  const el = $('.signin'), pane = $('.si-brand', el), stack = $('.si-stack', el), calm = matchMedia('(prefers-reduced-motion:reduce)').matches;
+  const pick = e => {
+    const b = e.target.closest?.('.si-acct'); if (!b || b.classList.contains('cur')) return;
+    const s = staff(b.dataset.id);
+    $$('.si-acct', el).forEach(x => x.classList.toggle('cur', x === b));
+    $$('.si-role li', el).forEach(li => li.className = li.dataset.p === 'view' || ROLES[s.role].can.includes(li.dataset.p) ? 'on' : 'off');
+    $('.si-role b', el).textContent = ROLES[s.role].n; $('.si-role small', el).textContent = s.name;
+  };
+  el.addEventListener('mouseover', pick); el.addEventListener('focusin', pick);
+  pane.addEventListener('pointermove', e => { const r = pane.getBoundingClientRect(); pane.style.setProperty('--px', ((e.clientX - r.left) / r.width - .5).toFixed(3)); pane.style.setProperty('--py', ((e.clientY - r.top) / r.height - .5).toFixed(3)); });
+  if (stack) {
+    const next = () => $$('.si-tk', stack).forEach(c => c.dataset.pos = (+c.dataset.pos + n - 1) % n);
+    stack.onclick = next;
+    if (!calm && n > 1) { const t = setInterval(() => { if (!stack.isConnected) clearInterval(t); else if (!stack.matches(':hover')) next(); }, 4000); }
+  }
+  if (!calm) $$('[data-to]', el).forEach(c => {
+    const to = +c.dataset.to, f = 'peso' in c.dataset ? peso0 : Math.round, t0 = performance.now();
+    (function step(t) { const k = Math.min(1, (t - t0) / 700); c.textContent = f(to * (1 - (1 - k) ** 3)); if (k < 1 && c.isConnected) requestAnimationFrame(step); })(t0);
+  });
 }
 function shell() {
   let mini = false; try { mini = localStorage.getItem('fundo-admin-side') === 'mini'; } catch (e) { }

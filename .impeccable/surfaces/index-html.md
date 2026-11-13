@@ -15,4 +15,4 @@ THESIS: The member app's welcome and sign-in, at desk size: a lime brand panel b
 
 OWN-WORLD: Shared Fundo tokens only. Lime field with the overview hero's gradient and logo watermark; white ground; co-op badge row; surface-grey account rows; system sans.
 
-FIRST VIEWPORT: Left, logo mark, "fundo" wordmark with the dark "admin" tag, one line. Right, co-op badge and name with "Staff console", "Sign in", the staff accounts with roles, and the prototype note. On phones the panel collapses to a short lime header.
+FIRST VIEWPORT: Left, logo mark, "fundo" wordmark with the dark "admin" tag, one line; below it the desk at a glance from the co-op's own records (user steer, 2026-11-13: denser, interactive left pane): applications waiting, the queue stack without member names, applications by stage, and a role card that follows the account under the pointer. Still no selling copy or claims. Right, co-op badge and name with "Staff console", "Sign in", the staff accounts with roles, and the prototype note. On phones the panel collapses to a short lime header.
