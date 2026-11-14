@@ -301,7 +301,6 @@ select.in{appearance:none;-webkit-appearance:none;padding-right:36px;background:
 .hero-g{flex-basis:100%;margin-bottom:18px;padding-bottom:18px;border-bottom:1px solid rgba(25,28,21,.1)}
 .hero-g .eyebrow{color:var(--ink);opacity:.7}
 .hero-g h1{margin:0;font:700 30px/1.15 var(--display);letter-spacing:-.025em}
-.hero .hl{margin:0;font-size:14px;font-weight:600;opacity:.75}
 .hero .ha{margin-top:6px;font:700 52px/1 var(--display);letter-spacing:-.045em;font-variant-numeric:tabular-nums}
 .hero .ha span{font-size:22px;letter-spacing:-.02em}
 .hero .hs{margin:10px 0 0;font-size:14.5px;opacity:.75}

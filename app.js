@@ -237,7 +237,7 @@ function vOverview() {
   const queue = w.slice().sort((a, b) => a.submitted - b.submitted).slice(0, 6);
   return `<section class="hero"><span class="wm" aria-hidden="true">${logo(260)}</span>
     <div class="hero-g"><p class="eyebrow">${new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</p><h1>${greet}, ${esc(me().name.split(' ')[0])}</h1></div>
-    <div><p class="hl">Waiting for a decision</p><div class="ha">${w.length} <span>application${w.length === 1 ? '' : 's'}</span></div>
+    <div><div class="ha">${w.length} <span>application${w.length === 1 ? '' : 's'}</span></div>
     <p class="hs">${peso0(amt)} requested${old ? ` · oldest sent ${ago(old.submitted)}` : ''}</p></div>
     <a class="btn dark" href="#/loans">Open the queue ${ic('chev', 16, 2.2)}</a></section>
   ${welcomeCard()}
