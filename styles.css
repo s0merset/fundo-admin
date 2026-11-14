@@ -90,14 +90,6 @@ select.in{appearance:none;-webkit-appearance:none;padding-right:36px;background:
 .si-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .si-clock{font-size:13px;font-weight:600}
 .si-glow{position:absolute;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(380px circle at var(--mx,30%) var(--my,25%),rgba(255,255,255,.26),transparent 65%)}
-.si-desk{margin-top:24px;animation:rise .5s var(--ease-out) .15s both}
-.si-dh{display:flex;align-items:center;gap:8px;padding:10px 0 4px;font-size:12.5px;font-weight:600;opacity:.8}
-.si-dh i{width:8px;height:8px;border-radius:50%;background:currentColor;animation:pulse 2s ease-in-out infinite}
-@keyframes pulse{50%{opacity:.3}}
-.si-stat{display:flex;align-items:center;gap:14px;padding:10px 0;border-top:1px solid color-mix(in srgb,currentColor 14%,transparent)}
-.si-stat b{min-width:1.6ch;font:700 30px/1 var(--display);letter-spacing:-.03em}
-.si-stat span{font-size:14px;font-weight:600;line-height:1.3}
-.si-stat small{display:block;font-size:12.5px;font-weight:400;opacity:.75}
 /* card centred vertically, footer pinned to the bottom of the pane */
 .si-main{display:flex;flex-direction:column;padding:56px clamp(24px,7vw,112px) 28px}
 .si-card{width:min(600px,100%);margin:auto 0}
@@ -132,7 +124,7 @@ select.in{appearance:none;-webkit-appearance:none;padding-right:36px;background:
   .si-brand{flex-direction:row;align-items:center;justify-content:flex-start;gap:12px;padding:16px}
   .si-mark{width:40px}.si-mark svg{width:40px;height:40px}
   .si-wm{font-size:30px}.si-wm span{font-size:12px;padding:3px 8px}
-  .si-brand p,.si-brand .wm,.si-vid,.si-glow,.si-clock,.si-desk{display:none}
+  .si-brand p,.si-brand .wm,.si-vid,.si-glow,.si-clock{display:none}
   .si-main{padding:28px 16px 20px}
   .si-card{margin:0 0 auto}
 }
@@ -251,6 +243,8 @@ select.in{appearance:none;-webkit-appearance:none;padding-right:36px;background:
 .av{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;flex-shrink:0;font:700 12.5px var(--font);background:var(--blush);color:var(--coral)}
 .av.lg{width:52px;height:52px;font-size:17px}
 .av.ink{background:var(--ink);color:var(--lime)}
+.av.ph{overflow:hidden;background:var(--surface)}
+.av.ph img{width:100%;height:100%;object-fit:cover}
 .lrow{display:flex;align-items:center;gap:12px;min-height:60px;padding:10px 0;border-top:1px solid rgba(25,28,21,.07);text-decoration:none}
 .ghd+.lrow,.lrow:first-child{border-top:0}
 a.lrow:hover b{text-decoration:underline}

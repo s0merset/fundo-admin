@@ -133,6 +133,9 @@ function save() { try { localStorage.setItem(KEY, JSON.stringify(D)); } catch (e
 const member = id => D.members.find(m => m.id === id);
 const app = id => D.apps.find(a => a.id === id);
 const staff = id => D.staff.find(s => s.id === id);
+// sample staff photos (stock portraits from randomuser.me); anyone else gets initials
+const PHOTO = { s1: 'media/liza.jpg', s2: 'media/renato.jpg', s3: 'media/joy.jpg' };
+const sav = (s, cls = 'ink') => s && PHOTO[s.id] ? `<span class="av ph"><img src="${PHOTO[s.id]}" alt=""></span>` : `<span class="av ${cls}">${initials(s?.name || '?')}</span>`;
 const me = () => staff(D.me);
 const can = p => p === 'view' || !!(me() && ROLES[me().role].can.includes(p));
 const full = m => m ? `${m.first} ${m.last}` : 'Removed member';
@@ -164,7 +167,7 @@ function docPill(a) { const v = a.docs.filter(d => d.state === 'verified').lengt
 
 function logRow(l) {
   const s = staff(l.by), tag = l.ref ? 'a' : 'div';
-  return `<${tag}${l.ref ? ` href="${l.ref}"` : ''} class="lrow"><span class="av ${s ? 'ink' : ''}">${s ? initials(s.name) : ic('user', 16)}</span><span class="grow"><b style="font-weight:500">${s ? `<strong>${esc(s.name)}</strong> ` : ''}${esc(l.text)}</b><small>${ago(l.at)}${s ? '' : ' · from the Fundo app'}</small></span></${tag}>`;
+  return `<${tag}${l.ref ? ` href="${l.ref}"` : ''} class="lrow">${s ? sav(s) : `<span class="av">${ic('user', 16)}</span>`}<span class="grow"><b style="font-weight:500">${s ? `<strong>${esc(s.name)}</strong> ` : ''}${esc(l.text)}</b><small>${ago(l.at)}${s ? '' : ' · from the Fundo app'}</small></span></${tag}>`;
 }
 function vOverview() {
   const w = waiting(), amt = sum(w, a => a.amount), old = w.slice().sort((a, b) => a.submitted - b.submitted)[0];
@@ -242,7 +245,7 @@ function vMembers() {
 }
 
 function vStaff() {
-  const row = s => `<div class="lrow"><span class="av ${s.id === D.me ? 'ink' : ''}">${initials(s.name)}</span><span class="grow"><b>${esc(s.name)}${s.id === D.me ? ' <span class="pill grey">You</span>' : ''}</b><small>${esc(s.title)} · ${esc(s.email)}</small></span>
+  const row = s => `<div class="lrow">${sav(s, s.id === D.me ? 'ink' : '')}<span class="grow"><b>${esc(s.name)}${s.id === D.me ? ' <span class="pill grey">You</span>' : ''}</b><small>${esc(s.title)} · ${esc(s.email)}</small></span>
     <select class="in" style="width:190px" data-role-for="${s.id}" aria-label="Role for ${esc(s.name)}" ${s.id === D.me ? 'disabled title="You can\'t change your own role"' : ''}>${Object.keys(ROLES).map(r => `<option value="${r}" ${s.role === r ? 'selected' : ''}>${ROLES[r].n}</option>`).join('')}</select>
     ${s.id === D.me ? '<span style="width:36px"></span>' : `<button class="ib" data-act="staffRemove" data-id="${s.id}" aria-label="Remove ${esc(s.name)}">${ic('trash', 17)}</button>`}</div>`;
   return `<div class="page-h"><div><h1>Staff and roles</h1><p class="mut">Who can sign in to Fundo Admin for ${esc(D.coop.sh)}, and what they can do.</p></div><button class="btn dark" data-act="staffInvite">${ic('plus', 16, 2.2)} Invite staff</button></div>
@@ -325,7 +328,7 @@ function dApp(a) {
       ${step(dec ? 'done' : a.reviewAt ? 'now' : '', dec ? (dec.kind === 'approved' ? 'Approved' : 'Rejected') : 'Decision', dec ? `${esc(by?.name || 'Staff')} · ${ago(dec.at)}` : 'Credit committee')}
       ${dec?.kind === 'rejected' ? '' : step(a.releasedAt ? 'done' : dec ? 'now' : '', 'Released', a.releasedAt ? `${peso(k.net)} to ${esc(a.disb)} · ref ${esc(a.releaseRef)} · ${ago(a.releasedAt)}` : 'After the member signs')}</ol>
       ${dec?.kind === 'rejected' ? `<div class="decision no"><b>${esc(dec.reason)}</b>${dec.note ? `<br>Message to the member: “${esc(dec.note)}”` : ''}</div>` : dec?.note ? `<div class="decision ok">${esc(dec.note)}</div>` : ''}</div>
-    <div class="sec"><h3>Notes</h3><div class="notes">${a.notes.length ? a.notes.map(n => { const s = staff(n.by); return `<div class="note"><span class="av ink">${initials(s?.name || '?')}</span><div><small><b>${esc(s?.name || 'Staff')}</b> · ${ago(n.at)}</small><p>${esc(n.text)}</p></div></div>`; }).join('') : '<p class="mut" style="margin:0;font-size:13px">No notes yet. Notes are for staff only; members don\'t see them.</p>'}
+    <div class="sec"><h3>Notes</h3><div class="notes">${a.notes.length ? a.notes.map(n => { const s = staff(n.by); return `<div class="note">${sav(s)}<div><small><b>${esc(s?.name || 'Staff')}</b> · ${ago(n.at)}</small><p>${esc(n.text)}</p></div></div>`; }).join('') : '<p class="mut" style="margin:0;font-size:13px">No notes yet. Notes are for staff only; members don\'t see them.</p>'}
       <div class="fld"><label for="noteIn" class="sr">Add a note</label><textarea id="noteIn" class="in" placeholder="Add a note for the credit committee"></textarea></div>
       <div><button class="btn sm ghost" data-act="addNote" data-id="${a.id}">Add note</button></div></div></div>
   </div>${foot ? `<div class="dr-f">${foot}</div>` : ''}`;
@@ -351,17 +354,10 @@ let lastView = '', drawerKey = '', drawerFocus = null, modalFocus = null, modalS
 /* Front door: a staff sign-in, same pattern as the member app's lime welcome + plain sign-in screen. */
 function signinView() {
   drawerKey = ''; lastView = '';
-  const w = waiting(), old = w.slice().sort((a, b) => a.submitted - b.submitted)[0], docs = allDocs(), flagged = docs.filter(DOCF.flagged).length, ready = D.apps.filter(a => a.status === 'approved');
-  const stat = (n, l, e) => `<div class="si-stat"><b class="tab" data-n="${n}">${n}</b><span>${l}<small>${e}</small></span></div>`;
   root.innerHTML = `<div class="signin">
   <aside class="si-brand"><video class="si-vid" muted loop playsinline aria-hidden="true"></video><i class="si-glow" aria-hidden="true"></i>
     <div class="si-top"><div class="si-mark">${logo(64)}</div><span class="si-clock tab" id="siClock"></span></div><span class="wm" aria-hidden="true">${logo(420, '#191C15', '#191C15')}</span>
-    <div><div class="si-wm">fundo <span>admin</span></div><p>Loan desk for co-op staff.</p>
-      <div class="si-desk"><div class="si-dh"><i></i>On the desk now</div>
-        ${stat(w.length, 'waiting for a decision', w.length ? `${peso0(sum(w, a => a.amount))} asked · oldest sent ${ago(old.submitted)}` : 'Every application has a decision')}
-        ${stat(docs.filter(DOCF.todo).length, 'documents to check', flagged ? flagged + ' flagged' : 'None flagged')}
-        ${stat(ready.length, 'approved, ready to release', ready.length ? peso0(sum(ready, a => a.amount)) + ' to pay out by GCash or Maya' : 'Nothing to pay out')}
-      </div></div></aside>
+    <div><div class="si-wm">fundo <span>admin</span></div><p>Loan desk for co-op staff.</p></div></aside>
   <main class="si-main"><div class="si-card" id="siCard">${UI.ob ? obCard() : siCard()}</div><footer class="si-foot">© ${new Date().getFullYear()} Fundo</footer></main></div>`;
   document.title = 'Sign in · Fundo Admin';
   const still = matchMedia('(prefers-reduced-motion:reduce)').matches, brand = $('.si-brand');
@@ -369,7 +365,6 @@ function signinView() {
   const clock = () => { const c = $('#siClock'); if (!c) return clearInterval(timer); c.textContent = new Date().toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }); };
   const timer = setInterval(clock, 15000); clock();
   if (!still) {
-    $$('.si-stat b').forEach(el => { const n = +el.dataset.n, t0 = performance.now(), f = t => { const p = Math.min(1, (t - t0) / 700); el.textContent = Math.round(n * (1 - Math.pow(1 - p, 3))); if (p < 1) requestAnimationFrame(f); }; requestAnimationFrame(f); });
     brand.addEventListener('pointermove', e => { const r = brand.getBoundingClientRect(); brand.style.setProperty('--mx', e.clientX - r.left + 'px'); brand.style.setProperty('--my', e.clientY - r.top + 'px'); });
   }
   // background video: desk widths only (phones get the short lime header); the lime panel stays if media/signin.mp4 is missing
@@ -385,7 +380,7 @@ function siCard() {
   return `<header class="si-box">
     <h1>Sign in</h1><p class="mut">Choose your staff account. What you can do depends on your role.</p></header>
     <div class="si-box">
-      <div class="si-list">${D.staff.map(s => `<button class="si-acct" data-act="signin" data-id="${s.id}"><span class="av ink">${initials(s.name)}</span><span class="grow"><b>${esc(s.name)}${s.id === D.last ? ' <span class="pill grey">Last used</span>' : ''}${s.fresh ? ' <span class="pill lime">New</span>' : ''}</b><small>${esc(s.title === ROLES[s.role].n ? s.title : s.title + ' · ' + ROLES[s.role].n)}</small></span>${ic('chev', 18)}</button>`).join('')}</div>
+      <div class="si-list">${D.staff.map(s => `<button class="si-acct" data-act="signin" data-id="${s.id}">${sav(s)}<span class="grow"><b>${esc(s.name)}${s.id === D.last ? ' <span class="pill grey">Last used</span>' : ''}${s.fresh ? ' <span class="pill lime">New</span>' : ''}</b><small>${esc(s.title === ROLES[s.role].n ? s.title : s.title + ' · ' + ROLES[s.role].n)}</small></span>${ic('chev', 18)}</button>`).join('')}</div>
     </div>
     <div class="si-box si-new"><span class="grow"><b>New to Fundo Admin?</b><small>Set up your co-op, or join one you were invited to.</small></span><button class="btn si-btn ghost" data-act="obGo" data-step="role">Get started ${ic('chev', 16, 2.2)}</button></div>`;
 }
@@ -504,7 +499,7 @@ function render() {
   const w = waiting().length, u = me();
   $('#nav').innerHTML = [['overview', 'grid', 'Overview'], ['loans', 'inbox', 'Loan applications', w], ['documents', 'doc', 'Documents'], ['releases', 'wallet', 'Releases'], ['members', 'users', 'Members'], ['products', 'card', 'Loan products'], ['activity', 'clock', 'Activity'], ...(can('staff.manage') ? [['staff', 'shield', 'Staff and roles']] : [])]
     .map(n => `<a href="#/${n[0]}" title="${n[2]}" ${n[0] === view ? 'aria-current="page"' : ''}>${ic(n[1], 19)}<span class="nl">${n[2]}</span>${n[3] ? `<span class="cnt" aria-label="${n[3]} waiting">${n[3]}</span>` : ''}</a>`).join('');
-  $('#sideMe').innerHTML = `<div class="row"><span class="av ink">${initials(u.name)}</span><span class="grow who"><b>${esc(u.name)}</b><small>${ROLES[u.role].n}</small></span>
+  $('#sideMe').innerHTML = `<div class="row">${sav(u)}<span class="grow who"><b>${esc(u.name)}</b><small>${ROLES[u.role].n}</small></span>
     <span class="acts"><button class="ib" data-act="signout" title="Switch account" aria-label="Switch account">${ic('logout', 17)}</button><button class="ib" data-act="resetDemo" title="Reset sample data" aria-label="Reset sample data">${ic('refresh', 17)}</button></span></div>`;
   $('#crumb').textContent = VIEWS[view][0];
   $('#main').innerHTML = VIEWS[view][1]();
