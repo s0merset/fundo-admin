@@ -426,11 +426,11 @@ function obSubmit(f) {
   if (o.step === 'you') {
     if (v('name').length < 3) err('name', 'Enter your full name');
     if (!okMail(v('email'))) err('email', 'Enter a valid email');
-    if (!bad) return obTo('coop');
+    if (!bad) return obWait(() => obTo('coop'));
   } else if (o.step === 'coop') {
     if (v('coop').length < 5) err('coop', 'Enter your co-op\'s registered name');
     if (!v('sh')) err('sh', 'Required'); if (!v('city')) err('city', 'Required');
-    if (!bad) return obTo('team');
+    if (!bad) return obWait(() => obTo('team'));
   } else if (o.step === 'team') {
     const seen = new Set([o.d.email.toLowerCase()]);
     [0, 1, 2].forEach(i => { const e = v('inv' + i).toLowerCase(); if (!e) return; if (!okMail(e)) err('inv' + i, 'Enter a valid email'); else if (seen.has(e)) err('inv' + i, 'Already on the list'); seen.add(e); });
@@ -439,7 +439,7 @@ function obSubmit(f) {
     const s = D.staff.find(x => x.email.toLowerCase() === v('email').toLowerCase());
     if (!okMail(v('email'))) err('email', 'Enter a valid email');
     else if (!s) err('email', `No invite for this email. Ask your co-op admin to invite you from Staff and roles.`);
-    if (!bad) { Object.assign(o.d, { sid: s.id, name: s.name, title: s.title === 'Staff' ? '' : s.title }); return obTo('joinme'); }
+    if (!bad) { Object.assign(o.d, { sid: s.id, name: s.name, title: s.title === 'Staff' ? '' : s.title }); return obWait(() => obTo('joinme')); }
   } else if (o.step === 'joinme') {
     if (v('name').length < 3) err('name', 'Enter your full name');
     if (!bad) { const s = staff(o.d.sid); Object.assign(s, { name: v('name'), title: v('title') || s.title, fresh: true }); D.me = D.last = s.id; log('joined Fundo Admin', '#/staff'); return obDone(); }
@@ -457,7 +457,16 @@ function obCreate() {
   D.staff.slice(1).forEach(s => log(`invited ${s.name} as ${ROLES[s.role].n}`, '#/staff'));
   obDone();
 }
-function obDone() { UI.ob = null; save(); location.hash = '#/overview'; render(); }
+function obDone() { save(); obWait(() => { UI.ob = null; location.hash = '#/overview'; render(); }, 'Setting up your dashboard…', 1100); }
+// skeleton of the next step while it "loads"; shortcut: fixed delay stands in for a real request, swap for the API call when there is one
+function obWait(fn, msg = '', ms = 650) {
+  const c = $('#siCard'), bar = (w, h = 14) => `<i class="sk" style="width:${w};height:${h}px"></i>`;
+  c.innerHTML = `<div class="sk-wrap" role="status" aria-live="polite"><span class="sr">${msg || 'Loading the next step…'}</span>
+    <div class="sk-row">${bar('64px')}${bar('72px')}</div>${bar('100%', 4)}${bar('55%', 30)}${bar('85%')}
+    ${[0, 1].map(() => `<div class="sk-fld">${bar('90px', 12)}${bar('100%', 50)}</div>`).join('')}${bar('100%', 50)}
+    ${msg ? `<p class="sk-msg">${msg}</p>` : ''}</div>`;
+  setTimeout(fn, ms);
+}
 function obTo(step) {
   UI.ob = step === 'signin' ? null : { step, d: UI.ob?.d || {} };
   const c = $('#siCard'); c.innerHTML = UI.ob ? obCard() : siCard();
