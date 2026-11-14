@@ -178,12 +178,12 @@ function vOverview() {
   const h = new Date().getHours(), greet = h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening';
   const kpi = (tile, icon, l, v, e) => `<div class="kpi"><span class="tile ${tile}">${ic(icon, 18)}</span><small>${l}</small><b>${v}</b><em>${e}</em></div>`;
   const queue = w.slice().sort((a, b) => a.submitted - b.submitted).slice(0, 6);
-  return `<div class="page-h"><div><p class="eyebrow">${new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</p><h1>${greet}, ${esc(me().name.split(' ')[0])}</h1></div></div>
-  ${welcomeCard()}
-  <section class="hero" aria-label="Waiting for a decision"><span class="wm" aria-hidden="true">${logo(260)}</span>
+  return `<section class="hero"><span class="wm" aria-hidden="true">${logo(260)}</span>
+    <div class="hero-g"><p class="eyebrow">${new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</p><h1>${greet}, ${esc(me().name.split(' ')[0])}</h1></div>
     <div><p class="hl">Waiting for a decision</p><div class="ha">${w.length} <span>application${w.length === 1 ? '' : 's'}</span></div>
     <p class="hs">${peso0(amt)} requested${old ? ` · oldest sent ${ago(old.submitted)}` : ''}</p></div>
     <a class="btn dark" href="#/loans">Open the queue ${ic('chev', 16, 2.2)}</a></section>
+  ${welcomeCard()}
   <div class="kpis">
     ${kpi('t-blue', 'users', 'Active members', act, `${nm} joined in the last 90 days`)}
     ${kpi('t-teal', 'wallet', 'Released, last 30 days', peso0(sum(rel, a => a.amount)), `${rel.length} loan${rel.length === 1 ? '' : 's'}`)}
@@ -384,7 +384,6 @@ function signinView() {
   }
 }
 const CLIPS = ['media/phone.mp4', 'media/office-desk.mp4', 'media/office-floor.mp4'];
-const coopAbbr = () => D.coop.sh.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
 function siCard() {
   return `<header class="si-box">
     <h1>Sign in</h1><p class="mut">Choose your staff account. What you can do depends on your role.</p></header>
@@ -505,7 +504,6 @@ function welcomeCard() {
 function shell() {
   let mini = false; try { mini = localStorage.getItem('fundo-admin-side') === 'mini'; } catch (e) { }
   root.innerHTML = `<div class="app app-in${mini ? ' mini' : ''}"><aside class="side" id="side">${brand()}
-    <div class="side-coop"><span class="cb" aria-hidden="true">${esc(coopAbbr())}</span><span><b>${esc(D.coop.sh)}</b><small>${esc(D.coop.city)} · Admin</small></span></div>
     <nav class="nav" id="nav" aria-label="Main"></nav><div class="side-me" id="sideMe"></div></aside>
     <div class="main-wrap"><header class="top"><button class="ib side-t" data-act="toggleSide" aria-controls="side" aria-expanded="${!mini}" aria-label="${mini ? 'Expand' : 'Collapse'} sidebar" title="${mini ? 'Expand' : 'Collapse'} sidebar">${ic('side', 19)}</button><span class="crumb" id="crumb"></span></header><main class="main" id="main"></main></div></div>
   <div class="scrim" id="scrim" data-act="closeLayer"></div>
@@ -529,12 +527,12 @@ function render() {
   const main = $('#main');
   if (view !== loadedView) { // new tab: skeleton first, then the page
     // shortcut: fixed delay stands in for fetching this tab's data; replace with the real request once there's a server
-    if (lastView !== view) { main.innerHTML = skel(view); main.setAttribute('aria-busy', 'true'); window.scrollTo(0, 0); lastView = view; }
+    if (lastView !== view) { main.innerHTML = skel(view); main.setAttribute('aria-busy', 'true'); delete main.dataset.v; window.scrollTo(0, 0); lastView = view; }
     clearTimeout(navT); navT = setTimeout(() => { loadedView = view; render(); }, 450);
     return syncDrawer('', '');
   }
   main.removeAttribute('aria-busy');
-  const fresh = !main.querySelector('.page-h');
+  const fresh = main.dataset.v !== view; main.dataset.v = view;
   main.innerHTML = VIEWS[view][1]();
   if (fresh) { main.classList.remove('enter'); void main.offsetWidth; main.classList.add('enter'); }
   let html = '', key = '';
@@ -545,7 +543,7 @@ function render() {
 function skel(view) {
   const b = (w, h = 14, r = 10) => `<i class="sk" style="width:${w};height:${h}px;border-radius:${r}px"></i>`;
   const head = `<div class="sk-page-h">${b('120px', 12)}${b('260px', 32)}</div>`;
-  if (view === 'overview') return `<div role="status" class="sk-dash"><span class="sr">Loading…</span>${head}${b('100%', 150, 26)}
+  if (view === 'overview') return `<div role="status" class="sk-dash"><span class="sr">Loading…</span>${b('100%', 276, 26)}
     <div class="kpis">${('<div class="kpi">' + b('36px', 36, 99) + b('60%', 12) + b('45%', 24) + '</div>').repeat(4)}</div>
     <div class="cols">${[6, 6].map(n => `<div class="card sk-card">${b('40%', 18)}${('<div class="sk-li">' + b('36px', 36, 99) + '<span>' + b('70%', 13) + b('45%', 11) + '</span></div>').repeat(n)}</div>`).join('')}</div></div>`;
   return `<div role="status" class="sk-dash"><span class="sr">Loading…</span>${head}<div class="sk-tools">${[90, 70, 80, 90, 60].map(w => b(w + 'px', 34, 99)).join('')}</div>

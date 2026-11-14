@@ -201,7 +201,7 @@ select.in{appearance:none;-webkit-appearance:none;padding-right:36px;background:
 .sk-tbl{padding:4px 16px}
 .sk-tbl .sk-li+.sk-li{border-top:1px solid var(--line)}
 /* first-sign-in welcome on the overview */
-.card.welcome{margin-bottom:16px;padding-bottom:16px;background:var(--bg);border:1.5px solid var(--ink)}
+.card.welcome{margin-top:16px;padding-bottom:16px;background:var(--bg);border:1.5px solid var(--ink)}
 .welcome>p{margin:0 0 14px;font-size:14px}
 .wc-steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px}
 .wc-step{display:flex;align-items:center;gap:12px;padding:12px;border-radius:16px;background:var(--surface);text-decoration:none;font-size:13.5px;font-weight:600;line-height:1.3;transition:background .2s ease}
@@ -213,9 +213,6 @@ select.in{appearance:none;-webkit-appearance:none;padding-right:36px;background:
 .app{display:grid;grid-template-columns:256px minmax(0,1fr);min-height:100vh}
 .side{position:sticky;top:0;height:100vh;display:flex;flex-direction:column;gap:18px;padding:22px 14px 16px;background:var(--surface);border-right:1px solid var(--line);overflow-y:auto}
 .side .brand{padding:0 8px}
-.side-coop{display:flex;align-items:center;gap:10px;padding:10px;border-radius:14px;background:var(--bg);box-shadow:0 0 0 1px var(--line)}
-.side-coop b{display:block;font-size:13.5px}
-.side-coop small{display:block;font-size:12px;color:var(--muted)}
 .cb{width:32px;height:32px;flex-shrink:0;border-radius:30%;background:var(--lime);display:grid;place-items:center;font:700 12px var(--font);box-shadow:inset 0 0 0 1px rgba(25,28,21,.15)}
 .nav{display:flex;flex-direction:column;gap:2px}
 .nav a{display:flex;align-items:center;gap:11px;height:40px;padding:0 10px;border-radius:11px;text-decoration:none;font-weight:500;color:var(--muted)}
@@ -249,6 +246,10 @@ select.in{appearance:none;-webkit-appearance:none;padding-right:36px;background:
 .ghd a,.ghd .lnk{border:0;background:none;padding:0;font:600 13.5px var(--font);color:var(--coral);text-decoration:none}
 .hero{position:relative;isolation:isolate;overflow:hidden;display:flex;align-items:flex-end;justify-content:space-between;gap:20px;padding:26px 28px;border-radius:26px;color:var(--ink);background:radial-gradient(110% 90% at 8% 0%,#E2F79A 0%,rgba(226,247,154,0) 55%),linear-gradient(180deg,#D2EE62 0%,#C4E34B 100%)}
 .hero .wm{position:absolute;right:120px;bottom:-70px;z-index:-1;opacity:.07;pointer-events:none}
+.hero{flex-wrap:wrap}
+.hero-g{flex-basis:100%;margin-bottom:18px;padding-bottom:18px;border-bottom:1px solid rgba(25,28,21,.1)}
+.hero-g .eyebrow{color:var(--ink);opacity:.7}
+.hero-g h1{margin:0;font:700 30px/1.15 var(--display);letter-spacing:-.025em}
 .hero .hl{margin:0;font-size:14px;font-weight:600;opacity:.75}
 .hero .ha{margin-top:6px;font:700 52px/1 var(--display);letter-spacing:-.045em;font-variant-numeric:tabular-nums}
 .hero .ha span{font-size:22px;letter-spacing:-.02em}
@@ -403,8 +404,7 @@ a.lrow:hover b{text-decoration:underline}
   .app.mini{grid-template-columns:72px minmax(0,1fr)}
   .mini .side{padding:22px 12px 16px;overflow-x:hidden}
   .mini .side .brand{padding:0;justify-content:center}
-  .mini .brand-w,.mini .side-coop>span:not(.cb){display:none}
-  .mini .side-coop{justify-content:center;padding:6px}
+  .mini .brand-w{display:none}
   .mini .nav a{justify-content:center;padding:0;position:relative}
   .mini .nav .nl{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
   .mini .nav .cnt{position:absolute;top:2px;right:2px;min-width:16px;height:16px;padding:0 4px;margin:0;font-size:10px;line-height:16px;box-shadow:0 0 0 2px var(--surface)}
@@ -422,7 +422,7 @@ a.lrow:hover b{text-decoration:underline}
 @media (max-width:860px){
   .app{grid-template-columns:1fr}
   .side{position:static;height:auto;flex-direction:row;flex-wrap:wrap;align-items:center;gap:10px;padding:12px 16px;border-right:0;border-bottom:1px solid var(--line)}
-  .side-coop,.nav-h{display:none}
+  .nav-h{display:none}
   .nav{order:3;flex-direction:row;width:100%;overflow-x:auto}
   .nav a{flex-shrink:0}
   .side-me{margin:0 0 0 auto;padding:0;border:0}
