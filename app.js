@@ -350,12 +350,12 @@ function dMember(m) {
 
 /* ---------- shell + render ---------- */
 const root = $('#root');
-let lastView = '', drawerKey = '', drawerFocus = null, modalFocus = null, modalSubmit = null;
+let lastView = '', loadedView = '', navT = 0, drawerKey = '', drawerFocus = null, modalFocus = null, modalSubmit = null;
 /* Front door: a staff sign-in, same pattern as the member app's lime welcome + plain sign-in screen. */
 function signinView() {
-  drawerKey = ''; lastView = '';
+  drawerKey = ''; lastView = loadedView = ''; clearTimeout(navT);
   root.innerHTML = `<div class="signin">
-  <aside class="si-brand"><video class="si-vid" muted loop playsinline aria-hidden="true"></video><i class="si-glow" aria-hidden="true"></i>
+  <aside class="si-brand"><video class="si-vid" muted playsinline aria-hidden="true"></video><video class="si-vid" muted playsinline aria-hidden="true"></video><i class="si-glow" aria-hidden="true"></i>
     <div class="si-top"><div class="si-mark">${logo(64)}</div><span class="si-clock tab" id="siClock"></span></div><span class="wm" aria-hidden="true">${logo(420, '#191C15', '#191C15')}</span>
     <div><div class="si-wm">fundo <span>admin</span></div><p>Loan desk for co-op staff.</p></div></aside>
   <main class="si-main"><div class="si-card" id="siCard">${UI.ob ? obCard() : siCard()}</div><footer class="si-foot">© ${new Date().getFullYear()} Fundo</footer></main></div>`;
@@ -367,14 +367,22 @@ function signinView() {
   if (!still) {
     brand.addEventListener('pointermove', e => { const r = brand.getBoundingClientRect(); brand.style.setProperty('--mx', e.clientX - r.left + 'px'); brand.style.setProperty('--my', e.clientY - r.top + 'px'); });
   }
-  // background video: desk widths only (phones get the short lime header); the lime panel stays if media/signin.mp4 is missing
-  const v = $('.si-vid');
+  // background videos: free Mixkit stock clips (mixkit.co, Stock Video Free License), played in turn and cross-faded between two <video>s.
+  // Desk widths only (phones get the short lime header); the lime panel stays if the files are missing.
+  const vs = $$('.si-vid');
   if (matchMedia('(min-width:761px)').matches) {
-    v.addEventListener('loadeddata', () => brand.classList.add('has-vid'));
-    v.autoplay = !still; // reduced motion: still first frame
-    v.src = 'media/signin.mp4';
+    let i = 0;
+    vs[0].addEventListener('loadeddata', () => { brand.classList.add('has-vid'); vs[0].classList.add('on'); }, { once: true });
+    vs.forEach(v => v.addEventListener('ended', () => { // reduced motion never fires this: no autoplay, the first frame stays
+      const n = vs.find(x => x !== v); n.src = CLIPS[++i % CLIPS.length];
+      n.addEventListener('playing', () => { n.classList.add('on'); v.classList.remove('on'); }, { once: true });
+      n.play().catch(() => { });
+    }));
+    vs[0].autoplay = !still;
+    vs[0].src = CLIPS[0];
   }
 }
+const CLIPS = ['media/phone.mp4', 'media/office-desk.mp4', 'media/office-floor.mp4'];
 const coopAbbr = () => D.coop.sh.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
 function siCard() {
   return `<header class="si-box">
@@ -399,8 +407,7 @@ function obCard() {
     <div class="si-list ob-roles">
       <button class="si-acct" data-act="obGo" data-step="you"><span class="tile t-lime">${ic('shield', 18)}</span><span class="grow"><b>I'm setting up our co-op</b><small>For the co-op manager or admin. You'll add your co-op's details and invite your team.</small></span>${ic('chev', 18)}</button>
       <button class="si-acct" data-act="obGo" data-step="join"><span class="tile t-blue">${ic('users', 18)}</span><span class="grow"><b>I was invited by my co-op</b><small>For credit managers, membership officers and other staff. Use the email your admin invited.</small></span>${ic('chev', 18)}</button>
-    </div>
-    <p class="si-note">${ic('lock', 14)}<span>Prototype: accounts are saved in this browser only.</span></p>`;
+    </div>`;
   if (o.step === 'you') return form(`${head('About you', 'You\'ll be the co-op admin: you can decide loans, edit members and manage staff.', 'role')}
     ${obFld('name', 'Full name', 'autofocus')}${obFld('email', 'Work email', '', 'Your co-op email, not a personal one if you have it.', 'email')}${obFld('title', 'Position', 'placeholder="e.g. General manager"')}${next('Continue')}`);
   if (o.step === 'coop') return form(`${head('Your co-op', 'This is what your staff see when they sign in.', 'you')}
@@ -459,7 +466,13 @@ function obCreate() {
 }
 function obDone() { save(); obWait(() => { UI.ob = null; location.hash = '#/overview'; render(); }, 'Setting up your dashboard…', 1100); }
 // skeleton of the next step while it "loads"; shortcut: fixed delay stands in for a real request, swap for the API call when there is one
-function obWait(fn, msg = '', ms = 650) {
+// closing animation: fade the element out, then run fn (the swap); reduced motion skips the wait
+function leave(el, fn, cls = 'leave', ms = 180) {
+  if (!el || matchMedia('(prefers-reduced-motion:reduce)').matches) return fn();
+  el.classList.add(cls); setTimeout(() => { el.classList.remove(cls); fn(); }, ms);
+}
+function obWait(fn, msg = '', ms = 650) { leave($('#siCard'), () => obSkel(fn, msg, ms)); }
+function obSkel(fn, msg, ms) {
   const c = $('#siCard'), bar = (w, h = 14) => `<i class="sk" style="width:${w};height:${h}px"></i>`;
   c.innerHTML = `<div class="sk-wrap" role="status" aria-live="polite"><span class="sr">${msg || 'Loading the next step…'}</span>
     <div class="sk-row">${bar('64px')}${bar('72px')}</div>${bar('100%', 4)}${bar('55%', 30)}${bar('85%')}
@@ -490,7 +503,7 @@ function welcomeCard() {
 
 function shell() {
   let mini = false; try { mini = localStorage.getItem('fundo-admin-side') === 'mini'; } catch (e) { }
-  root.innerHTML = `<div class="app${mini ? ' mini' : ''}"><aside class="side" id="side">${brand()}
+  root.innerHTML = `<div class="app app-in${mini ? ' mini' : ''}"><aside class="side" id="side">${brand()}
     <div class="side-coop"><span class="cb" aria-hidden="true">${esc(coopAbbr())}</span><span><b>${esc(D.coop.sh)}</b><small>${esc(D.coop.city)} · Admin</small></span></div>
     <nav class="nav" id="nav" aria-label="Main"></nav><div class="side-me" id="sideMe"></div></aside>
     <div class="main-wrap"><header class="top"><button class="ib side-t" data-act="toggleSide" aria-controls="side" aria-expanded="${!mini}" aria-label="${mini ? 'Expand' : 'Collapse'} sidebar" title="${mini ? 'Expand' : 'Collapse'} sidebar">${ic('side', 19)}</button><span class="crumb" id="crumb"></span></header><main class="main" id="main"></main></div></div>
@@ -511,13 +524,31 @@ function render() {
   $('#sideMe').innerHTML = `<div class="row">${sav(u)}<span class="grow who"><b>${esc(u.name)}</b><small>${ROLES[u.role].n}</small></span>
     <span class="acts"><button class="ib" data-act="signout" title="Switch account" aria-label="Switch account">${ic('logout', 17)}</button><button class="ib" data-act="resetDemo" title="Reset sample data" aria-label="Reset sample data">${ic('refresh', 17)}</button></span></div>`;
   $('#crumb').textContent = VIEWS[view][0];
-  $('#main').innerHTML = VIEWS[view][1]();
-  if (view !== lastView) { window.scrollTo(0, 0); lastView = view; }
   document.title = VIEWS[view][0] + ' · Fundo Admin';
+  const main = $('#main');
+  if (view !== loadedView) { // new tab: skeleton first, then the page
+    // shortcut: fixed delay stands in for fetching this tab's data; replace with the real request once there's a server
+    if (lastView !== view) { main.innerHTML = skel(view); main.setAttribute('aria-busy', 'true'); window.scrollTo(0, 0); lastView = view; }
+    clearTimeout(navT); navT = setTimeout(() => { loadedView = view; render(); }, 450);
+    return syncDrawer('', '');
+  }
+  main.removeAttribute('aria-busy');
+  const fresh = !main.querySelector('.page-h');
+  main.innerHTML = VIEWS[view][1]();
+  if (fresh) { main.classList.remove('enter'); void main.offsetWidth; main.classList.add('enter'); }
   let html = '', key = '';
   if (id && ['loans', 'documents', 'releases'].includes(view) && app(id)) { html = dApp(app(id)); key = 'a' + id; }
   else if (id && view === 'members' && member(id)) { html = dMember(member(id)); key = 'm' + id; }
   syncDrawer(html, key);
+}
+function skel(view) {
+  const b = (w, h = 14, r = 10) => `<i class="sk" style="width:${w};height:${h}px;border-radius:${r}px"></i>`;
+  const head = `<div class="sk-page-h">${b('120px', 12)}${b('260px', 32)}</div>`;
+  if (view === 'overview') return `<div role="status" class="sk-dash"><span class="sr">Loading…</span>${head}${b('100%', 150, 26)}
+    <div class="kpis">${('<div class="kpi">' + b('36px', 36, 99) + b('60%', 12) + b('45%', 24) + '</div>').repeat(4)}</div>
+    <div class="cols">${[6, 6].map(n => `<div class="card sk-card">${b('40%', 18)}${('<div class="sk-li">' + b('36px', 36, 99) + '<span>' + b('70%', 13) + b('45%', 11) + '</span></div>').repeat(n)}</div>`).join('')}</div></div>`;
+  return `<div role="status" class="sk-dash"><span class="sr">Loading…</span>${head}<div class="sk-tools">${[90, 70, 80, 90, 60].map(w => b(w + 'px', 34, 99)).join('')}</div>
+    <div class="tbl-wrap sk-tbl">${('<div class="sk-li">' + b('36px', 36, 99) + '<span>' + b('40%', 13) + b('25%', 11) + '</span>' + b('90px', 22, 99) + b('70px', 13) + '</div>').repeat(8)}</div></div>`;
 }
 function syncDrawer(html, key) {
   const dr = $('#drawer'), sc = $('#scrim');
@@ -561,15 +592,15 @@ const fld = (name, label, value = '', type = 'text', extra = '', hint = '') => `
 
 /* ---------- actions ---------- */
 const A = {
-  obGo: el => obTo(el.dataset.step),
-  obDismiss: () => { delete me().fresh; commit(); },
-  signin: el => { D.me = D.last = el.dataset.id; save(); location.hash = '#/overview'; render(); },
+  obGo: el => leave($('#siCard'), () => obTo(el.dataset.step)),
+  obDismiss: () => { const w = $('.welcome'); if (w) w.style.height = w.offsetHeight + 'px'; requestAnimationFrame(() => leave(w, () => { delete me().fresh; commit(); }, 'collapse', 320)); },
+  signin: el => leave($('.si-main'), () => { D.me = D.last = el.dataset.id; save(); location.hash = '#/overview'; render(); }, 'leave', 220),
   toggleSide: () => {
     const mini = $('.app').classList.toggle('mini'), b = $('.side-t'), l = (mini ? 'Expand' : 'Collapse') + ' sidebar';
     b.setAttribute('aria-expanded', !mini); b.setAttribute('aria-label', l); b.title = l;
     try { localStorage.setItem('fundo-admin-side', mini ? 'mini' : ''); } catch (e) { }
   },
-  signout: () => { D.me = null; UI.ob = null; save(); history.replaceState(null, '', location.pathname); render(); },
+  signout: () => leave($('.app'), () => { D.me = null; UI.ob = null; save(); history.replaceState(null, '', location.pathname); render(); }, 'leave', 220),
   resetDemo: () => openModal('Reset sample data?', '<p>This puts back the sample members and applications and clears changes made in this browser.</p>', { submit: 'Reset', danger: true, onSubmit: () => { const keep = D.me; D = seed(); D.me = keep; commit('Sample data reset'); } }),
   closeLayer: () => { if (!$('#modalWrap').hidden) { closeModal(); return; } const [, v] = location.hash.split('/'); location.hash = '#/' + (v || 'overview'); },
   closeModal: () => closeModal(),
