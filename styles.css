@@ -98,9 +98,9 @@ select.in{appearance:none;-webkit-appearance:none;padding-right:36px;background:
 .si-stat b{min-width:1.6ch;font:700 30px/1 var(--display);letter-spacing:-.03em}
 .si-stat span{font-size:14px;font-weight:600;line-height:1.3}
 .si-stat small{display:block;font-size:12.5px;font-weight:400;opacity:.75}
-.si-main{display:flex;align-items:center;padding:56px clamp(24px,7vw,112px)}
-.si-card{width:min(600px,100%)}
-.si-box .si-lh{margin-top:0}
+/* card centred vertically, footer pinned to the bottom of the pane */
+.si-main{display:flex;flex-direction:column;padding:56px clamp(24px,7vw,112px) 28px}
+.si-card{width:min(600px,100%);margin:auto 0}
 .si-box+.si-box{margin-top:36px}
 .si-box{padding:0}
 /* the member app's welcome entrance: one short staggered rise */
@@ -113,7 +113,6 @@ select.in{appearance:none;-webkit-appearance:none;padding-right:36px;background:
 .si-coop small{display:block;margin-top:2px;font-size:13px;color:var(--muted)}
 .si-card h1{margin:20px 0 0;font:700 28px/1.15 var(--display);letter-spacing:-.02em}
 .si-card p.mut{margin:8px 0 0;font-size:15px;line-height:1.4}
-.si-lh{display:flex;justify-content:space-between;margin-top:22px;font-size:12.5px;font-weight:600;color:var(--muted)}
 .si-list{display:flex;flex-direction:column;margin-top:4px}
 .si-acct{display:flex;align-items:center;gap:12px;width:100%;padding:12px;border:0;border-radius:16px;background:var(--surface);text-align:left;transition:transform .12s var(--ease-out),background .2s ease,box-shadow .2s ease}
 .si-acct:hover{background:color-mix(in srgb,var(--lime) 22%,var(--surface));box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--coral) 35%,transparent)}
@@ -126,7 +125,7 @@ select.in{appearance:none;-webkit-appearance:none;padding-right:36px;background:
 .si-acct small{display:block;font-size:12.5px;color:var(--muted)}
 .si-note{display:flex;gap:8px;align-items:flex-start;margin:16px 0 0;font-size:12.5px;color:var(--muted)}
 .si-note svg{flex-shrink:0;margin-top:2px}
-.si-foot{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 16px;margin-top:20px;font-size:12.5px;color:var(--muted)}
+.si-foot{margin-top:40px;font-size:12.5px;color:var(--muted)}
 .grow{flex:1;min-width:0}
 @media (max-width:760px){
   .signin{grid-template-columns:1fr;grid-template-rows:auto 1fr}
@@ -134,7 +133,8 @@ select.in{appearance:none;-webkit-appearance:none;padding-right:36px;background:
   .si-mark{width:40px}.si-mark svg{width:40px;height:40px}
   .si-wm{font-size:30px}.si-wm span{font-size:12px;padding:3px 8px}
   .si-brand p,.si-brand .wm,.si-vid,.si-glow,.si-clock,.si-desk{display:none}
-  .si-main{align-items:flex-start;padding:28px 16px}
+  .si-main{padding:28px 16px 20px}
+  .si-card{margin:0 0 auto}
 }
 /* ---------- right panel: forms and buttons (sign-in + first-time setup) ---------- */
 .si-main .fld{gap:7px}

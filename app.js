@@ -362,7 +362,7 @@ function signinView() {
         ${stat(docs.filter(DOCF.todo).length, 'documents to check', flagged ? flagged + ' flagged' : 'None flagged')}
         ${stat(ready.length, 'approved, ready to release', ready.length ? peso0(sum(ready, a => a.amount)) + ' to pay out by GCash or Maya' : 'Nothing to pay out')}
       </div></div></aside>
-  <main class="si-main"><div class="si-card" id="siCard">${UI.ob ? obCard() : siCard()}</div></main></div>`;
+  <main class="si-main"><div class="si-card" id="siCard">${UI.ob ? obCard() : siCard()}</div><footer class="si-foot">© ${new Date().getFullYear()} Fundo</footer></main></div>`;
   document.title = 'Sign in · Fundo Admin';
   const still = matchMedia('(prefers-reduced-motion:reduce)').matches, brand = $('.si-brand');
   // clock; the timer stops itself once the sign-in screen is gone
@@ -385,11 +385,9 @@ function siCard() {
   return `<header class="si-box">
     <h1>Sign in</h1><p class="mut">Choose your staff account. What you can do depends on your role.</p></header>
     <div class="si-box">
-      <div class="si-lh"><span>Staff accounts</span><span class="tab">${D.staff.length}</span></div>
       <div class="si-list">${D.staff.map(s => `<button class="si-acct" data-act="signin" data-id="${s.id}"><span class="av ink">${initials(s.name)}</span><span class="grow"><b>${esc(s.name)}${s.id === D.last ? ' <span class="pill grey">Last used</span>' : ''}${s.fresh ? ' <span class="pill lime">New</span>' : ''}</b><small>${esc(s.title === ROLES[s.role].n ? s.title : s.title + ' · ' + ROLES[s.role].n)}</small></span>${ic('chev', 18)}</button>`).join('')}</div>
     </div>
-    <div class="si-box si-new"><span class="grow"><b>New to Fundo Admin?</b><small>Set up your co-op, or join one you were invited to.</small></span><button class="btn si-btn ghost" data-act="obGo" data-step="role">Get started ${ic('chev', 16, 2.2)}</button></div>
-    <footer class="si-foot"><span>© ${new Date().getFullYear()} Fundo</span></footer>`;
+    <div class="si-box si-new"><span class="grow"><b>New to Fundo Admin?</b><small>Set up your co-op, or join one you were invited to.</small></span><button class="btn si-btn ghost" data-act="obGo" data-step="role">Get started ${ic('chev', 16, 2.2)}</button></div>`;
 }
 
 /* ---------- first-time setup: a co-op manager creates the workspace, invited staff join it ---------- */
