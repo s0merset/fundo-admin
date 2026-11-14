@@ -31,7 +31,7 @@ const ICON = {
   edit: '<path d="M4 20h4L19 9l-4-4L4 16z"/>', trash: '<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>',
   plus: '<path d="M12 5v14M5 12h14"/>', logout: '<path d="M15 4h4v16h-4M10 8l-4 4 4 4M6 12h11"/>',
   clock: '<circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/>', doc: '<path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 13h6M10 17h6"/>',
-  chev: '<path d="M9 6l6 6-6 6"/>', wallet: '<path d="M4 7a2 2 0 0 1 2-2h12v4"/><path d="M4 7v10a2 2 0 0 0 2 2h14V9H6a2 2 0 0 1-2-2z"/><circle cx="16" cy="14" r="1"/>',
+  chev: '<path d="M9 6l6 6-6 6"/>', back: '<path d="M15 6l-6 6 6 6"/>', wallet: '<path d="M4 7a2 2 0 0 1 2-2h12v4"/><path d="M4 7v10a2 2 0 0 0 2 2h14V9H6a2 2 0 0 1-2-2z"/><circle cx="16" cy="14" r="1"/>',
   card: '<rect x="3" y="6" width="18" height="13" rx="3"/><path d="M3 11h18"/>', msg: '<path d="M4 5h16v11H9l-5 4z"/>',
   lock: '<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>', refresh: '<path d="M20 12a8 8 0 1 1-2.3-5.6M20 4v5h-5"/>',
   send: '<path d="M4 12l16-8-6 16-3-7z"/>', user: '<circle cx="12" cy="8" r="4"/><path d="M4 20c1-4 4-6 8-6s7 2 8 6"/>', pause: '<path d="M9 6v12M15 6v12"/>',
@@ -157,7 +157,7 @@ function checks(a) {
 const blockers = a => { const p = PRODUCTS[a.product], r = []; if (a.docs.some(d => d.state !== 'verified')) r.push('verify every document'); if (p.co && !a.comaker.confirmed) r.push('get the co-maker\'s confirmation'); return r; };
 
 /* ---------- views ---------- */
-const UI = { lf: 'waiting', lq: '', mf: 'all', mq: '', df: 'todo', af: 'all' };
+const UI = { lf: 'waiting', lq: '', mf: 'all', mq: '', df: 'todo', af: 'all', ob: null };
 const statusPill = a => `<span class="pill ${STATUS[a.status][1]}">${STATUS[a.status][0]}</span>${a.waiting && a.status === 'review' ? ' <span class="pill grey">Waiting on member</span>' : ''}`;
 function capPill(a) { const r = calc(a).ratio; return `<span class="pill ${r <= 30 ? 'teal' : r <= 40 ? 'orange' : 'red'}">${r.toFixed(0)}% of pay</span>`; }
 function docPill(a) { const v = a.docs.filter(d => d.state === 'verified').length, f = a.docs.some(d => d.state === 'flagged'); return `<span class="pill ${f ? 'red' : v === a.docs.length ? 'teal' : 'grey'}">${f ? ic('flag', 12, 2.4) : ''}${v}/${a.docs.length} verified</span>`; }
@@ -176,6 +176,7 @@ function vOverview() {
   const kpi = (tile, icon, l, v, e) => `<div class="kpi"><span class="tile ${tile}">${ic(icon, 18)}</span><small>${l}</small><b>${v}</b><em>${e}</em></div>`;
   const queue = w.slice().sort((a, b) => a.submitted - b.submitted).slice(0, 6);
   return `<div class="page-h"><div><p class="eyebrow">${new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</p><h1>${greet}, ${esc(me().name.split(' ')[0])}</h1></div></div>
+  ${welcomeCard()}
   <section class="hero" aria-label="Waiting for a decision"><span class="wm" aria-hidden="true">${logo(260)}</span>
     <div><p class="hl">Waiting for a decision</p><div class="ha">${w.length} <span>application${w.length === 1 ? '' : 's'}</span></div>
     <p class="hs">${peso0(amt)} requested${old ? ` · oldest sent ${ago(old.submitted)}` : ''}</p></div>
@@ -351,7 +352,6 @@ let lastView = '', drawerKey = '', drawerFocus = null, modalFocus = null, modalS
 function signinView() {
   drawerKey = ''; lastView = '';
   const w = waiting(), old = w.slice().sort((a, b) => a.submitted - b.submitted)[0], docs = allDocs(), flagged = docs.filter(DOCF.flagged).length, ready = D.apps.filter(a => a.status === 'approved');
-  const admin = D.staff.find(x => x.role === 'admin');
   const stat = (n, l, e) => `<div class="si-stat"><b class="tab" data-n="${n}">${n}</b><span>${l}<small>${e}</small></span></div>`;
   root.innerHTML = `<div class="signin">
   <aside class="si-brand"><video class="si-vid" muted loop playsinline aria-hidden="true"></video><i class="si-glow" aria-hidden="true"></i>
@@ -362,17 +362,7 @@ function signinView() {
         ${stat(docs.filter(DOCF.todo).length, 'documents to check', flagged ? flagged + ' flagged' : 'None flagged')}
         ${stat(ready.length, 'approved, ready to release', ready.length ? peso0(sum(ready, a => a.amount)) + ' to pay out by GCash or Maya' : 'Nothing to pay out')}
       </div></div></aside>
-  <main class="si-main"><div class="si-card">
-    <header class="si-box"><div class="si-coop"><span class="cb">${esc(D.coop.sh.split(' ').map(w => w[0]).join('').slice(0, 2))}</span><span><b>${esc(D.coop.n)}</b><small>${esc(D.coop.city)} · Staff console</small></span></div>
-    <h1>Sign in</h1><p class="mut">Choose your staff account. What you can do depends on your role.</p></header>
-    <div class="si-box">
-      <div class="si-lh"><span>Staff accounts</span><span class="tab">${D.staff.length}</span></div>
-      <div class="si-list">${D.staff.map((s, i) => `<button class="si-acct" data-act="signin" data-id="${s.id}"><span class="av ink">${initials(s.name)}</span><span class="grow"><b>${esc(s.name)}${s.id === D.last ? ' <span class="pill grey">Last used</span>' : ''}</b><small>${esc(s.title === ROLES[s.role].n ? s.title : s.title + ' · ' + ROLES[s.role].n)}</small></span>${i < 9 ? `<kbd aria-hidden="true">${i + 1}</kbd>` : ''}${ic('chev', 18)}</button>`).join('')}</div>
-      <p class="si-keys">Press a number key to sign in as that account.</p>
-    </div>
-    <p class="si-note si-box">${ic('lock', 14)}<span>Prototype sign-in: pick a sample account.</span></p>
-    <footer class="si-foot"><span>© ${new Date().getFullYear()} ${esc(D.coop.sh)}</span><nav aria-label="Footer">${admin ? `<a href="mailto:${esc(admin.email)}?subject=Fundo%20Admin%20access">Request access</a>` : ''}<a href="https://github.com/s0merset/fundo-admin" target="_blank" rel="noopener">View source</a></nav></footer>
-  </div></main></div>`;
+  <main class="si-main"><div class="si-card" id="siCard">${UI.ob ? obCard() : siCard()}</div></main></div>`;
   document.title = 'Sign in · Fundo Admin';
   const still = matchMedia('(prefers-reduced-motion:reduce)').matches, brand = $('.si-brand');
   // clock; the timer stops itself once the sign-in screen is gone
@@ -390,10 +380,119 @@ function signinView() {
     v.src = 'media/signin.mp4';
   }
 }
+const coopAbbr = () => D.coop.sh.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+function siCard() {
+  const admin = D.staff.find(x => x.role === 'admin');
+  return `<header class="si-box"><div class="si-coop"><span class="cb">${esc(coopAbbr())}</span><span><b>${esc(D.coop.n)}</b><small>${esc(D.coop.city)} · Staff console</small></span></div>
+    <h1>Sign in</h1><p class="mut">Choose your staff account. What you can do depends on your role.</p></header>
+    <div class="si-box">
+      <div class="si-lh"><span>Staff accounts</span><span class="tab">${D.staff.length}</span></div>
+      <div class="si-list">${D.staff.map((s, i) => `<button class="si-acct" data-act="signin" data-id="${s.id}"><span class="av ink">${initials(s.name)}</span><span class="grow"><b>${esc(s.name)}${s.id === D.last ? ' <span class="pill grey">Last used</span>' : ''}${s.fresh ? ' <span class="pill lime">New</span>' : ''}</b><small>${esc(s.title === ROLES[s.role].n ? s.title : s.title + ' · ' + ROLES[s.role].n)}</small></span>${i < 9 ? `<kbd aria-hidden="true">${i + 1}</kbd>` : ''}${ic('chev', 18)}</button>`).join('')}</div>
+      <p class="si-keys">Press a number key to sign in as that account.</p>
+    </div>
+    <div class="si-box si-new"><span class="grow"><b>New to Fundo Admin?</b><small>Set up your co-op, or join one you were invited to.</small></span><button class="btn si-btn ghost" data-act="obGo" data-step="role">Get started ${ic('chev', 16, 2.2)}</button></div>
+    <p class="si-note si-box">${ic('lock', 14)}<span>Prototype sign-in: pick a sample account.</span></p>
+    <footer class="si-foot"><span>© ${new Date().getFullYear()} ${esc(D.coop.sh)}</span><nav aria-label="Footer">${admin ? `<a href="mailto:${esc(admin.email)}?subject=Fundo%20Admin%20access">Request access</a>` : ''}<a href="https://github.com/s0merset/fundo-admin" target="_blank" rel="noopener">View source</a></nav></footer>`;
+}
+
+/* ---------- first-time setup: a co-op manager creates the workspace, invited staff join it ---------- */
+const OB_STEPS = { you: [1, 3], coop: [2, 3], team: [3, 3], join: [1, 2], joinme: [2, 2] };
+const obFld = (name, label, extra = '', hint = '', type = 'text') => fld(name, label, UI.ob.d[name] || '', type, 'autocomplete="off" ' + extra, hint);
+function obCard() {
+  const o = UI.ob, d = o.d, st = OB_STEPS[o.step];
+  const head = (h, p, back) => `<div class="ob-top"><button type="button" class="ob-back" data-act="obGo" data-step="${back}">${ic('back', 16, 2.2)} Back</button>${st ? `<span class="tab mut">Step ${st[0]} of ${st[1]}</span>` : ''}</div>
+    ${st ? `<div class="ob-prog" aria-hidden="true">${Array.from({ length: st[1] }, (_, i) => `<i class="${i < st[0] ? 'on' : ''}"></i>`).join('')}</div>` : ''}
+    <h1>${h}</h1><p class="mut">${p}</p>`;
+  const next = (label, icon = 'chev') => `<button class="btn si-btn dark" type="submit">${label} ${ic(icon, 16, 2.2)}</button>`;
+  const form = body => `<form class="ob-form" id="obForm" data-step="${o.step}" novalidate>${body}</form>`;
+  if (o.step === 'role') return `<header>${head('Get started', 'Tell us how you\'re joining Fundo Admin.', 'signin')}</header>
+    <div class="si-list ob-roles">
+      <button class="si-acct" data-act="obGo" data-step="you"><span class="tile t-lime">${ic('shield', 18)}</span><span class="grow"><b>I'm setting up our co-op</b><small>For the co-op manager or admin. You'll add your co-op's details and invite your team.</small></span>${ic('chev', 18)}</button>
+      <button class="si-acct" data-act="obGo" data-step="join"><span class="tile t-blue">${ic('users', 18)}</span><span class="grow"><b>I was invited by my co-op</b><small>For credit managers, membership officers and other staff. Use the email your admin invited.</small></span>${ic('chev', 18)}</button>
+    </div>
+    <p class="si-note">${ic('lock', 14)}<span>Prototype: accounts are saved in this browser only.</span></p>`;
+  if (o.step === 'you') return form(`${head('About you', 'You\'ll be the co-op admin: you can decide loans, edit members and manage staff.', 'role')}
+    ${obFld('name', 'Full name', 'autofocus')}${obFld('email', 'Work email', '', 'Your co-op email, not a personal one if you have it.', 'email')}${obFld('title', 'Position', 'placeholder="e.g. General manager"')}${next('Continue')}`);
+  if (o.step === 'coop') return form(`${head('Your co-op', 'This is what your staff see when they sign in.', 'you')}
+    ${obFld('coop', 'Registered name', 'placeholder="e.g. San Isidro Multi-Purpose Cooperative" autofocus', 'As written on your CDA registration.')}
+    <div class="grid2">${obFld('sh', 'Short name', 'placeholder="e.g. San Isidro MPC"')}${obFld('city', 'City or municipality', 'placeholder="e.g. Iloilo City"')}</div>${next('Continue')}`);
+  if (o.step === 'team') return form(`${head('Invite your team', 'Optional. Add the staff who review loans and keep member records. You can do this later in Staff and roles.', 'coop')}
+    ${[0, 1, 2].map(i => `<div class="ob-inv${i ? ' more' : ''}">${fld('inv' + i, i ? `Staff email ${i + 1}` : 'Staff email', d['inv' + i] || '', 'email', 'autocomplete="off" placeholder="name@yourcoop.coop"')}
+      <div class="fld"><label for="f-r${i}">Role</label><select class="in" id="f-r${i}" name="r${i}">${['credit', 'officer', 'admin'].map(r => `<option value="${r}" ${(d['r' + i] || 'credit') === r ? 'selected' : ''}>${ROLES[r].n}</option>`).join('')}</select></div></div>`).join('')}
+    ${next('Create workspace', 'check')}`);
+  if (o.step === 'join') return form(`${head('Join your co-op', 'Enter the work email your co-op admin invited.', 'role')}
+    ${obFld('email', 'Work email', 'autofocus', '', 'email')}${next('Continue')}`);
+  if (o.step === 'joinme') { const s = staff(d.sid); return form(`${head('Confirm your details', `You've been added to ${esc(D.coop.sh)} as <b>${ROLES[s.role].n}</b>.`, 'join')}
+    ${obFld('name', 'Full name', 'autofocus')}${obFld('title', 'Position', 'placeholder="e.g. Loan officer"')}
+    <div class="ob-can"><b>As ${ROLES[s.role].n} you can</b><ul>${PERMS.filter(p => p[0] === 'view' || ROLES[s.role].can.includes(p[0])).map(p => `<li>${ic('check', 15, 2.6)}${p[1]}</li>`).join('')}</ul></div>
+    ${next('Go to my dashboard')}`); }
+  return '';
+}
+function obSubmit(f) {
+  const o = UI.ob, fd = new FormData(f), v = k => String(fd.get(k) ?? '').trim(); let bad = false;
+  const err = (k, m) => { fieldErr(f, k, m); bad = true; };
+  const okMail = e => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
+  for (const [k, x] of fd) o.d[k] = String(x).trim();
+  if (o.step === 'you') {
+    if (v('name').length < 3) err('name', 'Enter your full name');
+    if (!okMail(v('email'))) err('email', 'Enter a valid email');
+    if (!bad) return obTo('coop');
+  } else if (o.step === 'coop') {
+    if (v('coop').length < 5) err('coop', 'Enter your co-op\'s registered name');
+    if (!v('sh')) err('sh', 'Required'); if (!v('city')) err('city', 'Required');
+    if (!bad) return obTo('team');
+  } else if (o.step === 'team') {
+    const seen = new Set([o.d.email.toLowerCase()]);
+    [0, 1, 2].forEach(i => { const e = v('inv' + i).toLowerCase(); if (!e) return; if (!okMail(e)) err('inv' + i, 'Enter a valid email'); else if (seen.has(e)) err('inv' + i, 'Already on the list'); seen.add(e); });
+    if (!bad) return obCreate();
+  } else if (o.step === 'join') {
+    const s = D.staff.find(x => x.email.toLowerCase() === v('email').toLowerCase());
+    if (!okMail(v('email'))) err('email', 'Enter a valid email');
+    else if (!s) err('email', `No invite for this email at ${D.coop.sh}. Ask your co-op admin to invite you from Staff and roles.`);
+    if (!bad) { Object.assign(o.d, { sid: s.id, name: s.name, title: s.title === 'Staff' ? '' : s.title }); return obTo('joinme'); }
+  } else if (o.step === 'joinme') {
+    if (v('name').length < 3) err('name', 'Enter your full name');
+    if (!bad) { const s = staff(o.d.sid); Object.assign(s, { name: v('name'), title: v('title') || s.title, fresh: true }); D.me = D.last = s.id; log('joined Fundo Admin', '#/staff'); return obDone(); }
+  }
+  f.querySelector('.bad')?.focus();
+}
+function obCreate() {
+  const d = UI.ob.d, id = 's' + now();
+  // shortcut: sample members and loans stay so a new co-op has something to try; a real signup starts empty and imports its registry.
+  D.coop = { n: d.coop, sh: d.sh, city: d.city, pre: (d.sh.match(/\b[A-Za-z]/g) || ['C']).join('').slice(0, 3).toUpperCase() };
+  D.staff = [{ id, name: d.name, email: d.email, title: d.title || 'Co-op manager', role: 'admin', fresh: true },
+    ...[0, 1, 2].filter(i => d['inv' + i]).map(i => ({ id: id + '-' + i, name: d['inv' + i].split('@')[0].replace(/[._-]+/g, ' ').replace(/\b\w/g, c => c.toUpperCase()), email: d['inv' + i], title: 'Staff', role: d['r' + i] }))];
+  D.me = D.last = id; D.log = [];
+  log(`set up ${d.sh} on Fundo Admin`, '#/staff');
+  D.staff.slice(1).forEach(s => log(`invited ${s.name} as ${ROLES[s.role].n}`, '#/staff'));
+  obDone();
+}
+function obDone() { UI.ob = null; save(); location.hash = '#/overview'; render(); }
+function obTo(step) {
+  UI.ob = step === 'signin' ? null : { step, d: UI.ob?.d || {} };
+  const c = $('#siCard'); c.innerHTML = UI.ob ? obCard() : siCard();
+  ($('[autofocus]', c) || $('h1', c))?.focus({ preventScroll: true });
+}
+
+/* first sign-in: a short, role-aware checklist on the overview, dismissed once */
+function welcomeCard() {
+  const u = me(); if (!u.fresh) return '';
+  const r = u.role, steps = [
+    r === 'admin' && ['shield', 'Invite your staff and set their roles', '#/staff'],
+    r !== 'officer' && ['inbox', 'Open the loan queue and decide your first application', '#/loans'],
+    r !== 'officer' && ['doc', 'Check documents members sent with their applications', '#/documents'],
+    ['users', r === 'credit' ? 'Look up a member\'s shares and loan history' : 'Add or update member records', '#/members'],
+    ['card', 'Read your co-op\'s loan product rules', '#/products']
+  ].filter(Boolean);
+  return `<section class="card welcome" aria-labelledby="wcH"><div class="ghd"><h2 id="wcH">Welcome to Fundo Admin, ${esc(u.name.split(' ')[0])}</h2><button class="lnk" data-act="obDismiss">Got it, hide this</button></div>
+    <p class="mut">You're signed in as <b>${ROLES[r].n}</b>${D.staff.length > 1 ? '' : '. You\'re the only staff account so far'}. Here's where to start. The sample members and applications are there to practice on.</p>
+    <div class="wc-steps">${steps.map((s, i) => `<a href="${s[2]}" class="wc-step"><span class="tile t-lime">${ic(s[0], 17)}</span><span><small>${i + 1}</small>${s[1]}</span></a>`).join('')}</div></section>`;
+}
+
 function shell() {
   let mini = false; try { mini = localStorage.getItem('fundo-admin-side') === 'mini'; } catch (e) { }
   root.innerHTML = `<div class="app${mini ? ' mini' : ''}"><aside class="side" id="side">${brand()}
-    <div class="side-coop"><span class="cb" aria-hidden="true">BM</span><span><b>${esc(D.coop.sh)}</b><small>${esc(D.coop.city)} · Admin</small></span></div>
+    <div class="side-coop"><span class="cb" aria-hidden="true">${esc(coopAbbr())}</span><span><b>${esc(D.coop.sh)}</b><small>${esc(D.coop.city)} · Admin</small></span></div>
     <nav class="nav" id="nav" aria-label="Main"></nav><div class="side-me" id="sideMe"></div></aside>
     <div class="main-wrap"><header class="top"><button class="ib side-t" data-act="toggleSide" aria-controls="side" aria-expanded="${!mini}" aria-label="${mini ? 'Expand' : 'Collapse'} sidebar" title="${mini ? 'Expand' : 'Collapse'} sidebar">${ic('side', 19)}</button><span class="crumb" id="crumb"></span></header><main class="main" id="main"></main></div></div>
   <div class="scrim" id="scrim" data-act="closeLayer"></div>
@@ -463,13 +562,15 @@ const fld = (name, label, value = '', type = 'text', extra = '', hint = '') => `
 
 /* ---------- actions ---------- */
 const A = {
+  obGo: el => obTo(el.dataset.step),
+  obDismiss: () => { delete me().fresh; commit(); },
   signin: el => { D.me = D.last = el.dataset.id; save(); location.hash = '#/overview'; render(); },
   toggleSide: () => {
     const mini = $('.app').classList.toggle('mini'), b = $('.side-t'), l = (mini ? 'Expand' : 'Collapse') + ' sidebar';
     b.setAttribute('aria-expanded', !mini); b.setAttribute('aria-label', l); b.title = l;
     try { localStorage.setItem('fundo-admin-side', mini ? 'mini' : ''); } catch (e) { }
   },
-  signout: () => { D.me = null; save(); history.replaceState(null, '', location.pathname); render(); },
+  signout: () => { D.me = null; UI.ob = null; save(); history.replaceState(null, '', location.pathname); render(); },
   resetDemo: () => openModal('Reset sample data?', '<p>This puts back the sample members and applications and clears changes made in this browser.</p>', { submit: 'Reset', danger: true, onSubmit: () => { const keep = D.me; D = seed(); D.me = keep; commit('Sample data reset'); } }),
   closeLayer: () => { if (!$('#modalWrap').hidden) { closeModal(); return; } const [, v] = location.hash.split('/'); location.hash = '#/' + (v || 'overview'); },
   closeModal: () => closeModal(),
@@ -580,7 +681,7 @@ document.addEventListener('click', e => {
 });
 document.addEventListener('keydown', e => {
   if (e.key === 'Enter' && e.target.matches?.('tr[data-href]')) { location.hash = e.target.dataset.href; return; }
-  if (!me() && /^[1-9]$/.test(e.key) && !e.metaKey && !e.ctrlKey && !e.altKey) { $$('.si-acct')[e.key - 1]?.click(); return; }
+  if (!me() && !UI.ob && /^[1-9]$/.test(e.key) && !e.metaKey && !e.ctrlKey && !e.altKey) { $$('.si-acct')[e.key - 1]?.click(); return; }
   if (e.key === 'Escape') { if ($('#modalWrap') && !$('#modalWrap').hidden) closeModal(); else if ($('#drawer') && !$('#drawer').hidden) A.closeLayer(); return; }
   if (e.key === 'Tab') { // keep focus inside the open dialog
     const box = $('#modalWrap') && !$('#modalWrap').hidden ? $('#modal') : $('#drawer') && !$('#drawer').hidden ? $('#drawer') : null;
@@ -601,6 +702,7 @@ document.addEventListener('change', e => {
   const st = staff(s.dataset.roleFor); st.role = s.value; log(`changed ${st.name}'s role to ${ROLES[st.role].n}`, '#/staff'); commit(st.name + ' is now ' + ROLES[st.role].n);
 });
 document.addEventListener('submit', e => {
+  if (e.target.id === 'obForm') { e.preventDefault(); obSubmit(e.target); return; }
   if (e.target.id !== 'mdForm') return; e.preventDefault();
   if (!modalSubmit) return;
   const r = modalSubmit(new FormData(e.target), e.target);
