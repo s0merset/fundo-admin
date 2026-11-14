@@ -382,17 +382,14 @@ function signinView() {
 }
 const coopAbbr = () => D.coop.sh.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
 function siCard() {
-  const admin = D.staff.find(x => x.role === 'admin');
-  return `<header class="si-box"><div class="si-coop"><span class="cb">${esc(coopAbbr())}</span><span><b>${esc(D.coop.n)}</b><small>${esc(D.coop.city)} · Staff console</small></span></div>
+  return `<header class="si-box">
     <h1>Sign in</h1><p class="mut">Choose your staff account. What you can do depends on your role.</p></header>
     <div class="si-box">
       <div class="si-lh"><span>Staff accounts</span><span class="tab">${D.staff.length}</span></div>
-      <div class="si-list">${D.staff.map((s, i) => `<button class="si-acct" data-act="signin" data-id="${s.id}"><span class="av ink">${initials(s.name)}</span><span class="grow"><b>${esc(s.name)}${s.id === D.last ? ' <span class="pill grey">Last used</span>' : ''}${s.fresh ? ' <span class="pill lime">New</span>' : ''}</b><small>${esc(s.title === ROLES[s.role].n ? s.title : s.title + ' · ' + ROLES[s.role].n)}</small></span>${i < 9 ? `<kbd aria-hidden="true">${i + 1}</kbd>` : ''}${ic('chev', 18)}</button>`).join('')}</div>
-      <p class="si-keys">Press a number key to sign in as that account.</p>
+      <div class="si-list">${D.staff.map(s => `<button class="si-acct" data-act="signin" data-id="${s.id}"><span class="av ink">${initials(s.name)}</span><span class="grow"><b>${esc(s.name)}${s.id === D.last ? ' <span class="pill grey">Last used</span>' : ''}${s.fresh ? ' <span class="pill lime">New</span>' : ''}</b><small>${esc(s.title === ROLES[s.role].n ? s.title : s.title + ' · ' + ROLES[s.role].n)}</small></span>${ic('chev', 18)}</button>`).join('')}</div>
     </div>
     <div class="si-box si-new"><span class="grow"><b>New to Fundo Admin?</b><small>Set up your co-op, or join one you were invited to.</small></span><button class="btn si-btn ghost" data-act="obGo" data-step="role">Get started ${ic('chev', 16, 2.2)}</button></div>
-    <p class="si-note si-box">${ic('lock', 14)}<span>Prototype sign-in: pick a sample account.</span></p>
-    <footer class="si-foot"><span>© ${new Date().getFullYear()} ${esc(D.coop.sh)}</span><nav aria-label="Footer">${admin ? `<a href="mailto:${esc(admin.email)}?subject=Fundo%20Admin%20access">Request access</a>` : ''}<a href="https://github.com/s0merset/fundo-admin" target="_blank" rel="noopener">View source</a></nav></footer>`;
+    <footer class="si-foot"><span>© ${new Date().getFullYear()} Fundo</span></footer>`;
 }
 
 /* ---------- first-time setup: a co-op manager creates the workspace, invited staff join it ---------- */
@@ -422,7 +419,7 @@ function obCard() {
     ${next('Create workspace', 'check')}`);
   if (o.step === 'join') return form(`${head('Join your co-op', 'Enter the work email your co-op admin invited.', 'role')}
     ${obFld('email', 'Work email', 'autofocus', '', 'email')}${next('Continue')}`);
-  if (o.step === 'joinme') { const s = staff(d.sid); return form(`${head('Confirm your details', `You've been added to ${esc(D.coop.sh)} as <b>${ROLES[s.role].n}</b>.`, 'join')}
+  if (o.step === 'joinme') { const s = staff(d.sid); return form(`${head('Confirm your details', `You've been added to your co-op as <b>${ROLES[s.role].n}</b>.`, 'join')}
     ${obFld('name', 'Full name', 'autofocus')}${obFld('title', 'Position', 'placeholder="e.g. Loan officer"')}
     <div class="ob-can"><b>As ${ROLES[s.role].n} you can</b><ul>${PERMS.filter(p => p[0] === 'view' || ROLES[s.role].can.includes(p[0])).map(p => `<li>${ic('check', 15, 2.6)}${p[1]}</li>`).join('')}</ul></div>
     ${next('Go to my dashboard')}`); }
@@ -448,7 +445,7 @@ function obSubmit(f) {
   } else if (o.step === 'join') {
     const s = D.staff.find(x => x.email.toLowerCase() === v('email').toLowerCase());
     if (!okMail(v('email'))) err('email', 'Enter a valid email');
-    else if (!s) err('email', `No invite for this email at ${D.coop.sh}. Ask your co-op admin to invite you from Staff and roles.`);
+    else if (!s) err('email', `No invite for this email. Ask your co-op admin to invite you from Staff and roles.`);
     if (!bad) { Object.assign(o.d, { sid: s.id, name: s.name, title: s.title === 'Staff' ? '' : s.title }); return obTo('joinme'); }
   } else if (o.step === 'joinme') {
     if (v('name').length < 3) err('name', 'Enter your full name');
@@ -681,7 +678,6 @@ document.addEventListener('click', e => {
 });
 document.addEventListener('keydown', e => {
   if (e.key === 'Enter' && e.target.matches?.('tr[data-href]')) { location.hash = e.target.dataset.href; return; }
-  if (!me() && !UI.ob && /^[1-9]$/.test(e.key) && !e.metaKey && !e.ctrlKey && !e.altKey) { $$('.si-acct')[e.key - 1]?.click(); return; }
   if (e.key === 'Escape') { if ($('#modalWrap') && !$('#modalWrap').hidden) closeModal(); else if ($('#drawer') && !$('#drawer').hidden) A.closeLayer(); return; }
   if (e.key === 'Tab') { // keep focus inside the open dialog
     const box = $('#modalWrap') && !$('#modalWrap').hidden ? $('#modal') : $('#drawer') && !$('#drawer').hidden ? $('#drawer') : null;
