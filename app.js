@@ -378,8 +378,9 @@ function signinView() {
       n.addEventListener('playing', () => { n.classList.add('on'); v.classList.remove('on'); }, { once: true });
       n.play().catch(() => { });
     }));
-    vs[0].autoplay = !still;
+    vs[0].preload = 'auto'; // Safari defaults to metadata only, which can hold back loadeddata
     vs[0].src = CLIPS[0];
+    if (!still) vs[0].play().catch(() => { }); // autoplay blocked (e.g. Low Power Mode): the first frame still shows
   }
 }
 const CLIPS = ['media/phone.mp4', 'media/office-desk.mp4', 'media/office-floor.mp4'];
