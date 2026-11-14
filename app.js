@@ -42,21 +42,23 @@ const logo = (s, fg = '#191C15', dot = '#fff') => `<svg width="${s}" height="${s
 const brand = s => `<div class="brand" role="img" aria-label="Fundo"><span class="brand-ic">${logo(s || 21)}</span><span class="brand-w" aria-hidden="true">fundo</span></div>`;
 
 /* ---------- co-op rules (sample policy, same as the app) ---------- */
-const PRODUCTS = {
+// starting products; the live list is D.products (admins can add, edit and delete), aliased as PRODUCTS
+const PRODUCT_SEED = {
   salary: { n: 'Salary Loan', rate: 1, mult: 8, cap: 150000, co: true, docs: ['id', 'pay', 'coe'] },
   emergency: { n: 'Emergency Loan', rate: 1.5, mult: 2, cap: 20000, co: true, docs: ['id', 'proof'] },
   livelihood: { n: 'Livelihood Loan', rate: 1.25, mult: 10, cap: 200000, co: true, docs: ['id', 'permit', 'biz'] },
   starter: { n: 'Starter Loan', rate: 1.5, mult: 2, cap: 10000, co: false, docs: ['id', 'pay'] }
 };
+let PRODUCTS = PRODUCT_SEED;
 const DOCS = { id: 'Valid ID', pay: 'Proof of income', coe: 'Certificate of employment', proof: 'Proof of the emergency', permit: 'Business permit', biz: 'Photo of the business' };
 const FILES = { id: 'philsys-id.jpg', pay: 'payslip-oct-2026.pdf', coe: 'certificate-of-employment.pdf', proof: 'hospital-bill.jpg', permit: 'barangay-business-permit.pdf', biz: 'store-front.jpg' };
 const STATUS = { new: ['New', 'blue'], review: ['In review', 'orange'], approved: ['Approved', 'teal'], released: ['Released', 'lime'], rejected: ['Rejected', 'red'] };
 const ROLES = {
-  admin: { n: 'Co-op admin', can: ['loans.decide', 'docs.verify', 'members.edit', 'members.delete', 'staff.manage'] },
+  admin: { n: 'Co-op admin', can: ['loans.decide', 'docs.verify', 'members.edit', 'members.delete', 'products.manage', 'staff.manage'] },
   credit: { n: 'Credit manager', can: ['loans.decide', 'docs.verify'] },
   officer: { n: 'Membership officer', can: ['members.edit'] }
 };
-const PERMS = [['view', 'See loan applications and member records'], ['docs.verify', 'Verify or flag documents'], ['loans.decide', 'Approve, reject and release loans'], ['members.edit', 'Add, edit and deactivate members'], ['members.delete', 'Delete member records'], ['staff.manage', 'Manage staff and roles']];
+const PERMS = [['view', 'See loan applications and member records'], ['docs.verify', 'Verify or flag documents'], ['loans.decide', 'Approve, reject and release loans'], ['members.edit', 'Add, edit and deactivate members'], ['members.delete', 'Delete member records'], ['products.manage', 'Add, edit and delete loan products'], ['staff.manage', 'Manage staff and roles']];
 const amort = (P, r, n) => { r /= 100; return r ? P * r / (1 - Math.pow(1 + r, -n)) : P / n; };
 function calc(a) {
   const p = PRODUCTS[a.product], mo = amort(a.amount, p.rate, a.term), fee = a.amount * .01, cbu = a.amount * .02;
@@ -97,7 +99,7 @@ function seed() {
   const A = (id, mid, product, amount, term, purpose, income, cm, hrs, status, docs, extra) => ({
     id, memberId: mid, product, amount, term, purpose, income, disb: 'GCash', submitted: t - hrs * HR, status, waiting: false,
     comaker: cm ? { name: cm[0], no: cm[1], confirmed: cm[2] } : null,
-    docs: PRODUCTS[product].docs.map((k, i) => ({ k, state: ST[docs[i] || 'p'], note: '' })),
+    docs: PRODUCT_SEED[product].docs.map((k, i) => ({ k, state: ST[docs[i] || 'p'], note: '' })),
     notes: [], decision: null, reviewAt: null, reviewBy: null, releasedAt: null, releaseRef: '', ...(extra || {})
   });
   const apps = [
@@ -124,11 +126,13 @@ function seed() {
     { at: t - 68 * HR, by: 's2', text: 'asked Paolo Mendoza for more information', ref: '#/loans/LN-2611-0131' },
     { at: t - 96 * HR, by: 's2', text: 'approved Jocelyn Navarro\'s ₱30,000 Salary Loan', ref: '#/loans/LN-2610-0125' }
   ];
-  return { v: 1, coop: { n: 'Bayanihan Multi-Purpose Cooperative', sh: 'Bayanihan MPC', city: 'Cebu City', pre: 'BMC' }, staff, members, apps, log, me: null };
+  return { v: 1, coop: { n: 'Bayanihan Multi-Purpose Cooperative', sh: 'Bayanihan MPC', city: 'Cebu City', pre: 'BMC' }, staff, members, apps, log, products: structuredClone(PRODUCT_SEED), me: null };
 }
 const KEY = 'fundo-admin-v1';
 let D;
-function load() { try { const v = JSON.parse(localStorage.getItem(KEY)); if (v && v.v === 1) { D = v; return; } } catch (e) { } D = seed(); }
+function load() { try { const v = JSON.parse(localStorage.getItem(KEY)); if (v && v.v === 1) D = v; } catch (e) { } if (!D) D = seed(); useData(); }
+// browsers saved before products were editable have no D.products: start them from the seed
+function useData() { D.products ||= structuredClone(PRODUCT_SEED); PRODUCTS = D.products; }
 function save() { try { localStorage.setItem(KEY, JSON.stringify(D)); } catch (e) { } }
 const member = id => D.members.find(m => m.id === id);
 const app = id => D.apps.find(a => a.id === id);
@@ -282,9 +286,11 @@ function vReleases() {
     : '<tr><td colspan="6" class="empty">No loans released yet.</td></tr>'}</tbody></table></div>`;
 }
 function vProducts() {
-  return `<div class="page-h"><div><h1>Loan products</h1><p class="mut">The rules every application is checked against. They match what members see in the Fundo app.</p></div>${lockNote('Set by the board. Read-only in this prototype')}</div>
-  <div class="tbl-wrap"><table class="tbl flat"><thead><tr><th>Loan</th><th>Monthly rate</th><th>Limit</th><th>Co-maker</th><th>Documents needed</th><th class="num">Applications</th></tr></thead><tbody>${Object.entries(PRODUCTS).map(([k, p]) => { const n = D.apps.filter(a => a.product === k), o = n.filter(isOpen).length;
-    return `<tr><td><b>${p.n}</b></td><td class="tab">${p.rate}% a month</td><td><span class="tab">${p.mult}×</span> savings and shares<small>up to ${peso0(p.cap)}</small></td><td>${p.co ? 'Required' : 'Not needed'}</td><td>${p.docs.map(d => DOCS[d]).join(', ')}</td><td class="num">${n.length}<small>${o} open</small></td></tr>`; }).join('')}</tbody></table></div>
+  const edit = can('products.manage');
+  return `<div class="page-h"><div><h1>Loan products</h1><p class="mut">The rules every application is checked against. They match what members see in the Fundo app.</p></div>${edit ? `<button class="btn dark" data-act="productAdd">${ic('plus', 16, 2.2)} Add product</button>` : lockNote('Only co-op admins can change loan products')}</div>
+  <div class="tbl-wrap"><table class="tbl flat"><thead><tr><th>Loan</th><th>Monthly rate</th><th>Limit</th><th>Co-maker</th><th>Documents needed</th><th class="num">Applications</th>${edit ? '<th><span class="sr">Actions</span></th>' : ''}</tr></thead><tbody>${Object.entries(PRODUCTS).map(([k, p]) => { const n = D.apps.filter(a => a.product === k), o = n.filter(isOpen).length;
+    return `<tr><td><b>${esc(p.n)}</b></td><td class="tab">${p.rate}% a month</td><td><span class="tab">${p.mult}×</span> savings and shares<small>up to ${peso0(p.cap)}</small></td><td>${p.co ? 'Required' : 'Not needed'}</td><td>${p.docs.map(d => DOCS[d]).join(', ')}</td><td class="num">${n.length}<small>${o} open</small></td>
+    ${edit ? `<td class="num"><span class="row-acts"><button class="ib" data-act="productEdit" data-k="${k}" aria-label="Edit ${esc(p.n)}" title="Edit">${ic('edit', 17)}</button><button class="ib" data-act="productDelete" data-k="${k}" aria-label="Delete ${esc(p.n)}" ${n.length ? `disabled title="Can't delete: ${n.length} application${n.length === 1 ? ' uses' : 's use'} this product"` : 'title="Delete"'}>${ic('trash', 17)}</button></span></td>` : ''}</tr>`; }).join('')}</tbody></table></div>
   <p class="mut" style="margin:14px 4px 0;font-size:13px">Every loan also takes a 1% service fee and a 2% share capital build-up from the amount released.</p>`;
 }
 function vActivity() {
@@ -487,6 +493,25 @@ function obTo(step) {
 }
 
 /* first sign-in: a short, role-aware checklist on the overview, dismissed once */
+/* guided tour: driver.js (loaded from jsDelivr in index.html) highlights the app one part at a time */
+function tour() {
+  const drv = window.driver?.js?.driver; if (!drv || !me()) return; // CDN blocked or offline: skip quietly
+  const r = me().role, can_ = p => ROLES[r].can.includes(p), nav = h => `.nav a[href="#/${h}"]`;
+  const steps = [
+    { popover: { title: 'Welcome to Fundo Admin', description: `A quick look around, about a minute. You're signed in as <b>${ROLES[r].n}</b>; the tour shows what that lets you do.` } },
+    { element: '.hero', popover: { title: 'Your desk at a glance', description: 'How many loan applications are waiting for a decision, how much is being asked, and how long the oldest has waited.' } },
+    { element: nav('loans'), popover: { title: 'Loan applications', description: can_('loans.decide') ? 'The queue. Open an application to check it against your co-op\'s rules, then approve or reject it. The red badge is how many are waiting.' : 'Every application members send from the Fundo app. You can read them; credit managers and admins make the decisions.' } },
+    { element: nav('documents'), popover: { title: 'Documents', description: can_('docs.verify') ? 'IDs, payslips and permits members attached. Verify each one or flag it with a note to the member.' : 'IDs, payslips and permits members attached. Credit managers and admins verify them.' } },
+    { element: nav('releases'), popover: { title: 'Releases', description: 'Approved loans waiting to be paid out by GCash or Maya. Record the reference when the money is sent.' } },
+    { element: nav('members'), popover: { title: 'Members', description: can_('members.edit') ? 'Your member registry: shares, savings and loan history. Add members the board has accepted here.' : 'Look up a member\'s shares, savings and loan history.' } },
+    { element: nav('products'), popover: { title: 'Loan products', description: can_('products.manage') ? 'The rules every application is checked against. Add, edit or delete products here.' : 'The rules every application is checked against: rates, limits, co-makers and documents.' } },
+    { element: nav('activity'), popover: { title: 'Activity', description: 'Everything staff did and everything that came in from the Fundo app, newest first.' } },
+    can_('staff.manage') && { element: nav('staff'), popover: { title: 'Staff and roles', description: 'Invite your team and choose what each person can do.' } },
+    { element: '#sideMe', popover: { title: 'Your account', description: 'Switch accounts here when you\'re done. You can replay this tour from the welcome card on the Overview.' } }
+  ].filter(s => s && (!s.element || $(s.element)?.offsetParent));
+  drv({ showProgress: true, progressText: '{{current}} of {{total}}', nextBtnText: 'Next', prevBtnText: 'Back', doneBtnText: 'Done', popoverClass: 'fundo-tour', stagePadding: 6, stageRadius: 12, steps }).drive();
+}
+
 function welcomeCard() {
   const u = me(); if (!u.fresh) return '';
   const r = u.role, steps = [
@@ -496,7 +521,7 @@ function welcomeCard() {
     ['users', r === 'credit' ? 'Look up a member\'s shares and loan history' : 'Add or update member records', '#/members'],
     ['card', 'Read your co-op\'s loan product rules', '#/products']
   ].filter(Boolean);
-  return `<section class="card welcome" aria-labelledby="wcH"><div class="ghd"><h2 id="wcH">Welcome to Fundo Admin, ${esc(u.name.split(' ')[0])}</h2><button class="lnk" data-act="obDismiss">Got it, hide this</button></div>
+  return `<section class="card welcome" aria-labelledby="wcH"><div class="ghd"><h2 id="wcH">Welcome to Fundo Admin, ${esc(u.name.split(' ')[0])}</h2><span class="wc-acts"><button class="lnk" data-act="tour">Show me around</button><button class="lnk" data-act="obDismiss">Got it, hide this</button></span></div>
     <p class="mut">You're signed in as <b>${ROLES[r].n}</b>${D.staff.length > 1 ? '' : '. You\'re the only staff account so far'}. Here's where to start. The sample members and applications are there to practice on.</p>
     <div class="wc-steps">${steps.map((s, i) => `<a href="${s[2]}" class="wc-step"><span class="tile t-lime">${ic(s[0], 17)}</span><span><small>${i + 1}</small>${s[1]}</span></a>`).join('')}</div></section>`;
 }
@@ -535,6 +560,7 @@ function render() {
   const fresh = main.dataset.v !== view; main.dataset.v = view;
   main.innerHTML = VIEWS[view][1]();
   if (fresh) { main.classList.remove('enter'); void main.offsetWidth; main.classList.add('enter'); }
+  if (view === 'overview' && u.fresh && !u.toured) { u.toured = true; save(); setTimeout(tour, 600); } // first visit: start the tour once
   let html = '', key = '';
   if (id && ['loans', 'documents', 'releases'].includes(view) && app(id)) { html = dApp(app(id)); key = 'a' + id; }
   else if (id && view === 'members' && member(id)) { html = dMember(member(id)); key = 'm' + id; }
@@ -600,7 +626,7 @@ const A = {
     try { localStorage.setItem('fundo-admin-side', mini ? 'mini' : ''); } catch (e) { }
   },
   signout: () => leave($('.app'), () => { D.me = null; UI.ob = null; save(); history.replaceState(null, '', location.pathname); render(); }, 'leave', 220),
-  resetDemo: () => openModal('Reset sample data?', '<p>This puts back the sample members and applications and clears changes made in this browser.</p>', { submit: 'Reset', danger: true, onSubmit: () => { const keep = D.me; D = seed(); D.me = keep; commit('Sample data reset'); } }),
+  resetDemo: () => openModal('Reset sample data?', '<p>This puts back the sample members and applications and clears changes made in this browser.</p>', { submit: 'Reset', danger: true, onSubmit: () => { const keep = D.me; D = seed(); useData(); D.me = keep; commit('Sample data reset'); } }),
   closeLayer: () => { if (!$('#modalWrap').hidden) { closeModal(); return; } const [, v] = location.hash.split('/'); location.hash = '#/' + (v || 'overview'); },
   closeModal: () => closeModal(),
   lfilter: el => { UI.lf = el.dataset.k; render(); },
@@ -660,6 +686,10 @@ const A = {
     openModal('Delete ' + esc(full(m)) + '?', `<p>This removes the member record and its past applications from Fundo. It can't be undone. Most co-ops deactivate instead to keep the history.</p>`, { submit: 'Delete record', danger: true, onSubmit: () => { D.members = D.members.filter(x => x.id !== m.id); D.apps = D.apps.filter(a => a.memberId !== m.id); log(`deleted the record of ${full(m)} (${m.no})`); location.hash = '#/members'; commit('Member record deleted'); } });
   },
 
+  productAdd: () => productForm(),
+  productEdit: el => productForm(el.dataset.k),
+  productDelete: el => { const k = el.dataset.k, p = PRODUCTS[k]; openModal('Delete ' + esc(p.n) + '?', `<p>Members won't be able to apply for ${esc(p.n)} in the Fundo app anymore. No applications use it, so nothing else changes.</p>`, { submit: 'Delete product', danger: true, onSubmit: () => { delete PRODUCTS[k]; log(`deleted the ${p.n} loan product`, '#/products'); commit(p.n + ' deleted'); } }); },
+  tour: () => tour(),
   staffInvite: () => openModal('Invite staff', `${fld('name', 'Full name', '', 'text', 'autocomplete="off"')}${fld('email', 'Work email', '', 'email', 'autocomplete="off"')}${fld('title', 'Position', '', 'text', 'autocomplete="off" placeholder="e.g. Loan officer"')}
     <div class="fld"><label for="f-role">Role</label><select class="in" id="f-role" name="role">${Object.keys(ROLES).map(r => `<option value="${r}" ${r === 'officer' ? 'selected' : ''}>${ROLES[r].n}</option>`).join('')}</select></div>`,
     { submit: 'Send invite', onSubmit: (fd, f) => { const name = String(fd.get('name')).trim(), email = String(fd.get('email')).trim(); let bad = false;
@@ -670,6 +700,31 @@ const A = {
       D.staff.push({ id: 's' + now(), name, email, title: String(fd.get('title')).trim() || 'Staff', role: String(fd.get('role')) }); log(`invited ${name} as ${ROLES[fd.get('role')].n}`, '#/staff'); commit('Invite sent to ' + email); } }),
   staffRemove: el => { const s = staff(el.dataset.id); openModal('Remove ' + esc(s.name) + '?', `<p>${esc(s.name)} won't be able to sign in to Fundo Admin. Their past actions stay in the activity log.</p>`, { submit: 'Remove access', danger: true, onSubmit: () => { D.staff = D.staff.filter(x => x.id !== s.id); log(`removed ${s.name}'s access`, '#/staff'); commit(s.name + ' removed'); } }); }
 };
+
+function productForm(k) {
+  const p = k ? PRODUCTS[k] : { n: '', rate: 1, mult: 2, cap: 10000, co: true, docs: ['id'] };
+  openModal(k ? 'Edit ' + esc(p.n) : 'Add a loan product', `${k ? '<p class="mut">Changes apply to new checks right away, including applications already in the queue.</p>' : ''}
+    ${fld('n', 'Name', p.n, 'text', 'autocomplete="off" placeholder="e.g. Educational Loan"')}
+    <div class="grid2">${fld('rate', 'Monthly interest (%)', p.rate, 'number', 'min="0" max="5" step="0.05" inputmode="decimal"', 'Most co-op loans: 0.5% to 2%')}${fld('cap', 'Most a member can borrow (₱)', p.cap, 'number', 'min="1000" step="500" inputmode="numeric"')}</div>
+    ${fld('mult', 'Limit as a multiple of savings and shares (×)', p.mult, 'number', 'min="0.5" max="20" step="0.5" inputmode="decimal"', 'A member with ₱10,000 in savings and shares at 2× can borrow up to ₱20,000, never more than the cap')}
+    <label class="check"><input type="checkbox" name="co" ${p.co ? 'checked' : ''}><span>Needs a co-maker who is also a member</span></label>
+    <div class="fld"><span class="lb">Documents members must attach</span><div class="doc-picks">${Object.entries(DOCS).map(([d, t]) => `<label class="check"><input type="checkbox" name="docs" value="${d}" ${p.docs.includes(d) ? 'checked' : ''}><span>${t}</span></label>`).join('')}</div></div>`,
+    { wide: true, submit: k ? 'Save changes' : 'Add product', onSubmit: (fd, f) => {
+      const n = String(fd.get('n')).trim(), rate = Number(fd.get('rate')), cap = Number(fd.get('cap')), mult = Number(fd.get('mult')), docs = fd.getAll('docs').map(String); let bad = false;
+      const err = (x, m) => { fieldErr(f, x, m); bad = true; };
+      if (n.length < 3) err('n', 'Enter a name');
+      else if (Object.entries(PRODUCTS).some(([x, q]) => x !== k && q.n.toLowerCase() === n.toLowerCase())) err('n', 'There is already a product with this name');
+      if (!(rate >= 0 && rate <= 5)) err('rate', 'Between 0% and 5% a month');
+      if (!(cap >= 1000)) err('cap', 'At least ₱1,000');
+      if (!(mult >= .5 && mult <= 20)) err('mult', 'Between 0.5× and 20×');
+      if (!docs.length) { const box = f.querySelector('.doc-picks'); if (!box.nextElementSibling) box.insertAdjacentHTML('afterend', '<small class="err">Pick at least one document</small>'); bad = true; }
+      if (bad) { f.querySelector('.bad')?.focus(); return false; }
+      const rec = { n, rate, cap, mult, co: !!fd.get('co'), docs };
+      if (k) { Object.assign(PRODUCTS[k], rec); log(`updated the ${n} rules`, '#/products'); commit(n + ' saved'); return; }
+      PRODUCTS[n.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '-' + now().toString(36)] = rec;
+      log(`added the ${n} loan product`, '#/products'); commit(n + ' added');
+    } });
+}
 
 function memberForm(m) {
   const e = m || { first: '', last: '', mobile: '', tin: '', city: '', type: 'Regular', accepted: new Date().toISOString().slice(0, 10), res: '', sub: 2000, paid: 500, pmes: true };
