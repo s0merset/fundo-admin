@@ -192,7 +192,8 @@ const app = id => D.apps.find(a => a.id === id);
 const staff = id => D.staff.find(s => s.id === id);
 // sample staff photos (stock portraits from randomuser.me); anyone else gets initials
 const PHOTO = { s1: 'media/liza.jpg', s2: 'media/renato.jpg', s3: 'media/joy.jpg' };
-const sav = (s, cls = 'ink') => s && PHOTO[s.id] ? `<span class="av ph"><img src="${PHOTO[s.id]}" alt=""></span>` : `<span class="av ${cls}">${initials(s?.name || '?')}</span>`;
+const pic = s => s && (s.photo || PHOTO[s.id]);
+const sav = (s, cls = 'ink') => pic(s) ? `<span class="av ph"><img src="${pic(s)}" alt=""></span>` : `<span class="av ${cls}">${initials(s?.name || '?')}</span>`;
 const me = () => staff(D.me);
 const can = p => p === 'view' || !!(me() && ROLES[me().role].can.includes(p));
 const full = m => m ? `${m.first} ${m.last}` : 'Removed member';
@@ -711,7 +712,7 @@ function render() {
   const w = waiting().length, u = me();
   $('#nav').innerHTML = [['overview', 'grid', 'Overview'], ['loans', 'inbox', 'Loan applications', w], ['documents', 'doc', 'Documents'], ['releases', 'wallet', 'Releases'], ['collections', 'coins', 'Collections', (od => od || '')(onBooks().filter(a => ledger(a).late > 0).length)], ['members', 'users', 'Members'], ['products', 'card', 'Loan products'], ['reports', 'chart', 'Reports'], ['activity', 'clock', 'Activity'], ...(can('staff.manage') ? [['staff', 'shield', 'Staff and roles']] : [])]
     .map(n => `<a href="#/${n[0]}" title="${n[2]}" ${n[0] === view ? 'aria-current="page"' : ''}>${ic(n[1], 19)}<span class="nl">${n[2]}</span>${n[3] ? `<span class="cnt" aria-label="${n[3]} ${n[0] === 'collections' ? 'overdue' : 'waiting'}">${n[3]}</span>` : ''}</a>`).join('');
-  $('#sideMe').innerHTML = `<div class="row">${sav(u)}<span class="grow who"><b>${esc(u.name)}</b><small>${ROLES[u.role].n}</small></span>
+  $('#sideMe').innerHTML = `<div class="row"><button class="me-btn" data-act="profile" title="Your profile" aria-label="Your profile: ${esc(u.name)}">${sav(u)}<span class="grow who"><b>${esc(u.name)}</b><small>${ROLES[u.role].n}</small></span></button>
     <span class="acts"><button class="ib" data-act="signout" title="Switch account" aria-label="Switch account">${ic('logout', 17)}</button><button class="ib" data-act="resetDemo" title="Reset sample data" aria-label="Reset sample data">${ic('refresh', 17)}</button></span></div>`;
   $('#crumb').textContent = VIEWS[view][0];
   document.title = VIEWS[view][0] + ' · Fundo Admin';
@@ -771,7 +772,7 @@ function openModal(title, body, opts = {}) {
   md.innerHTML = `<form id="mdForm" novalidate><div class="md-h"><h2 id="mdTitle">${title}</h2><button type="button" class="ib" data-act="closeModal" aria-label="Close">${ic('x', 20)}</button></div>
     <div class="md-b">${body}</div>${opts.foot ?? (modalSubmit ? `<div class="md-f"><button type="button" class="btn ghost" data-act="closeModal">Cancel</button><button class="btn ${opts.danger ? 'red' : 'dark'}" type="submit">${opts.submit || 'Save'}</button></div>` : '')}</form>`;
   w.hidden = false; void w.offsetWidth; w.classList.add('on');
-  setTimeout(() => ($('.md-b input:not([type=hidden]),.md-b textarea,.md-b select', md) || $('.md-f .btn:last-child', md) || $('.ib', md))?.focus(), 40);
+  setTimeout(() => ($('.md-b input:not([type=hidden]):not([type=file]),.md-b textarea,.md-b select', md) || $('.md-f .btn:last-child', md) || $('.ib', md))?.focus(), 40);
 }
 function closeModal() {
   const w = $('#modalWrap'); if (!w || w.hidden) return;
@@ -877,6 +878,22 @@ const A = {
   productEdit: el => productForm(el.dataset.k),
   productDelete: el => { const k = el.dataset.k, p = PRODUCTS[k]; openModal('Delete ' + esc(p.n) + '?', `<p>Members won't be able to apply for ${esc(p.n)} in the Fundo app anymore. No applications use it, so nothing else changes.</p>`, { submit: 'Delete product', danger: true, onSubmit: () => { delete PRODUCTS[k]; log(`deleted the ${p.n} loan product`, '#/products'); commit(p.n + ' deleted'); } }); },
   tour: () => tour(),
+  profile: () => { const u = me(), r = ROLES[u.role];
+    openModal('Your profile', `<div class="pf-top"><span id="pfAv">${sav(u)}</span><div class="grow"><b>${esc(u.name)}</b><small>${esc(r.n)} · ${esc(D.coop.sh)}</small>
+      <div class="pf-ph"><label class="btn ghost sm" for="f-pic">${ic('plus', 14, 2.2)} ${pic(u) ? 'Change photo' : 'Add photo'}</label><input type="file" id="f-pic" accept="image/*" class="sr">${u.photo ? '<button type="button" class="btn ghost sm" data-act="profileNoPic">Remove</button>' : ''}</div></div></div>
+      <input type="hidden" name="photo" value="${u.photo ? 'keep' : ''}">
+      ${fld('name', 'Full name', u.name, 'text', 'autocomplete="name"')}${fld('title', 'Position', u.title, 'text', 'autocomplete="organization-title"')}
+      ${fld('email', 'Work email', u.email, 'email', 'autocomplete="email"')}${fld('mobile', 'Mobile number', u.mobile || '', 'tel', 'autocomplete="tel" placeholder="e.g. 0917 123 4567"', 'Optional. For sign-in codes and urgent loan alerts.')}
+      <div class="ob-can"><b>Your role: ${esc(r.n)}</b><ul>${PERMS.filter(p => p[0] === 'view' || r.can.includes(p[0])).map(p => `<li>${ic('check', 15, 2.6)}${p[1]}</li>`).join('')}</ul><small class="mut">${can('staff.manage') ? 'Change roles in Staff and roles.' : 'Only a co-op admin can change your role.'}</small></div>`,
+    { submit: 'Save profile', onSubmit: (fd, f) => { const v = k => String(fd.get(k) ?? '').trim(), email = v('email'), mob = v('mobile'); let bad = false;
+      if (v('name').length < 3) { fieldErr(f, 'name', 'Enter your full name'); bad = true; }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { fieldErr(f, 'email', 'Enter a valid email'); bad = true; }
+      else if (D.staff.some(s => s.id !== u.id && s.email.toLowerCase() === email.toLowerCase())) { fieldErr(f, 'email', 'Another staff account uses this email'); bad = true; }
+      if (mob && !/^(\+?63|0)9\d{9}$/.test(mob.replace(/[\s-]/g, ''))) { fieldErr(f, 'mobile', 'Enter a PH mobile number, e.g. 0917 123 4567'); bad = true; }
+      if (bad) return false;
+      const ph = v('photo'); if (ph !== 'keep') { if (ph) u.photo = ph; else delete u.photo; }
+      Object.assign(u, { name: v('name'), title: v('title') || u.title, email, mobile: mob }); log('updated their profile', '#/staff'); commit('Profile saved'); } }); },
+  profileNoPic: el => { $('#mdForm').elements.photo.value = ''; $('#pfAv').innerHTML = `<span class="av ink">${initials(me().name)}</span>`; el.remove(); },
   staffInvite: () => openModal('Invite staff', `${fld('name', 'Full name', '', 'text', 'autocomplete="off"')}${fld('email', 'Work email', '', 'email', 'autocomplete="off"')}${fld('title', 'Position', '', 'text', 'autocomplete="off" placeholder="e.g. Loan officer"')}
     <div class="fld"><label for="f-role">Role</label><select class="in" id="f-role" name="role">${Object.keys(ROLES).map(r => `<option value="${r}" ${r === 'officer' ? 'selected' : ''}>${ROLES[r].n}</option>`).join('')}</select></div>`,
     { submit: 'Send invite', onSubmit: (fd, f) => { const name = String(fd.get('name')).trim(), email = String(fd.get('email')).trim(); let bad = false;
@@ -968,6 +985,13 @@ document.addEventListener('input', e => {
   else if (e.target.classList?.contains('bad')) { e.target.classList.remove('bad'); e.target.removeAttribute('aria-invalid'); e.target.closest('.fld')?.querySelector('.err')?.remove(); }
 });
 document.addEventListener('change', e => {
+  if (e.target.id === 'f-pic') { // shrink to a 160px square so it fits in localStorage
+    const file = e.target.files[0]; if (!file) return; const img = new Image(), url = URL.createObjectURL(file);
+    img.onload = () => { const c = document.createElement('canvas'), z = Math.min(img.width, img.height); c.width = c.height = 160;
+      c.getContext('2d').drawImage(img, (img.width - z) / 2, (img.height - z) / 2, z, z, 0, 0, 160, 160); URL.revokeObjectURL(url);
+      const d = c.toDataURL('image/jpeg', .85); $('#mdForm').elements.photo.value = d; $('#pfAv').innerHTML = `<span class="av ph"><img src="${d}" alt=""></span>`; };
+    img.onerror = () => { URL.revokeObjectURL(url); toast('That file isn\'t an image we can read'); }; img.src = url; return;
+  }
   const s = e.target.closest('[data-role-for]'); if (!s) return;
   const st = staff(s.dataset.roleFor); st.role = s.value; log(`changed ${st.name}'s role to ${ROLES[st.role].n}`, '#/staff'); commit(st.name + ' is now ' + ROLES[st.role].n);
 });

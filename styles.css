@@ -487,3 +487,17 @@ a.lrow:hover b{text-decoration:underline}
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important}
 }
+/* profile */
+.me-btn{display:flex;align-items:center;gap:10px;flex:1;min-width:0;padding:4px;margin:-4px;border:0;border-radius:12px;background:none;color:inherit;font:inherit;text-align:left;cursor:pointer}
+.me-btn:hover{background:color-mix(in srgb,var(--ink) 6%,transparent)}
+.me-btn:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.pf-top{display:flex;align-items:center;gap:16px;margin-bottom:18px}
+.pf-top .av{width:72px;height:72px;font-size:22px}
+.pf-top b{display:block;font-size:17px}
+.pf-top small{display:block;color:var(--muted);font-size:13px}
+.pf-ph{display:flex;gap:8px;margin-top:10px}
+.pf-ph label{cursor:pointer}
+.pf-ph:has(input:focus-visible) label{outline:2px solid var(--ink);outline-offset:2px}
+.modal .ob-can{margin-top:4px}
+.mini .me-btn{flex:none}
+.modal .ob-can small{display:block;margin-top:10px}
