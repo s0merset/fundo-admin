@@ -88,9 +88,9 @@ select.in{appearance:none;-webkit-appearance:none;padding-right:36px;background:
 }
 /* brand panel extras: clock, pointer glow, live desk counts (currentColor so they work on lime and over the video) */
 .si-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
-.si-clock{padding:6px 12px;border-radius:99px;background:color-mix(in srgb,currentColor 12%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);font-size:13px;font-weight:600}
+.si-clock{font-size:13px;font-weight:600}
 .si-glow{position:absolute;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(380px circle at var(--mx,30%) var(--my,25%),rgba(255,255,255,.26),transparent 65%)}
-.si-desk{margin-top:24px;padding:6px 16px;border-radius:20px;background:color-mix(in srgb,currentColor 10%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);animation:rise .5s var(--ease-out) .15s both}
+.si-desk{margin-top:24px;animation:rise .5s var(--ease-out) .15s both}
 .si-dh{display:flex;align-items:center;gap:8px;padding:10px 0 4px;font-size:12.5px;font-weight:600;opacity:.8}
 .si-dh i{width:8px;height:8px;border-radius:50%;background:currentColor;animation:pulse 2s ease-in-out infinite}
 @keyframes pulse{50%{opacity:.3}}
