@@ -70,8 +70,8 @@ select.in{appearance:none;-webkit-appearance:none;padding-right:36px;background:
 .si-brand{position:relative;isolation:isolate;overflow:hidden;display:flex;flex-direction:column;justify-content:space-between;padding:32px 40px;background:radial-gradient(110% 90% at 8% 0%,#E2F79A 0%,rgba(226,247,154,0) 55%),linear-gradient(180deg,#D2EE62 0%,#C4E34B 100%)}
 .si-brand .wm{position:absolute;right:-90px;top:50%;z-index:-1;transform:translateY(-50%);opacity:.05;pointer-events:none}
 /* the bare "f" mark, no tile: thicker strokes, larger; ink on the lime panel, light over the video */
-.si-mark{width:80px;color:var(--ink)}
-.si-mark svg{display:block;width:80px;height:80px;overflow:visible}
+.si-mark{width:64px;color:var(--ink)}
+.si-mark svg{display:block;width:64px;height:64px;overflow:visible}
 .si-mark g{stroke:currentColor;stroke-width:18}
 .si-mark circle{fill:#fff}
 .si-wm{font:700 52px/1 var(--display);letter-spacing:-.04em}
